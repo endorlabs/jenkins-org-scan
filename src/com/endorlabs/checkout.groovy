@@ -16,10 +16,15 @@ class checkout implements Serializable {
     def gitClone = "GITHUB_TOKEN=" + pipeline.env.GITHUB_TOKEN
     gitClone += " git clone " + url + " ."
     pipeline.sh(gitClone)
-    pipeline.sh("ls -la")
+    def cmdGetDefaultBranch = "GITHUB_TOKEN=" + pipeline.env.GITHUB_TOKEN
+    cmdGetDefaultBranch += " git remote show " + url 
+    cmdGetDefaultBranch += "  | grep 'HEAD branch' | cut -d' ' -f5"
+    def defaultBranch = pipeline.sh(returnStdout: true, script: cmdGetDefaultBranch).trim()
+    def checkoutDefaultBranch = "git checkout " + defaultBranch
+    pipeline.sh(checkoutDefaultBranch)
     def hostName = pipeline.sh(returnStdout: true, script: "uname -n").trim()
     def path = pipeline.sh(returnStdout: true, script: "pwd").trim()
-    pipeline.echo("Cloned $url in $path on $hostName")
+    pipeline.echo("Cloned $url , Branch: $defaultBranch in $path on $hostName")
   }
 
   def git(def pipeline, String url, String credential) {
