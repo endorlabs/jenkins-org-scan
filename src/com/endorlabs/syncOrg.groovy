@@ -10,7 +10,9 @@ class syncOrg implements Serializable {
     def dockerRun = "docker run --rm"
     dockerRun += " -e GITHUB_TOKEN=" + pipeline.env.GITHUB_TOKEN
     dockerRun += " us-central1-docker.pkg.dev/endor-ci/public/endorctl:" + pipeline.params.ENDORCTL_VERSION
-    dockerRun += " --api " + pipeline.params.ENDOR_LABS_API
+    if (pipeline.env.ENDOR_LABS_API) {
+      dockerRun += " --api " + pipeline.env.ENDOR_LABS_API
+    }
     dockerRun += " --namespace " + pipeline.params.ENDOR_LABS_NAMESPACE
     dockerRun += " --api-key " + pipeline.env.ENDOR_LABS_API_KEY 
     dockerRun += " --api-secret " + pipeline.env.ENDOR_LABS_API_SECRET
@@ -36,7 +38,9 @@ class syncOrg implements Serializable {
     def dockerRun = "docker run --rm"
     dockerRun += " -e GITHUB_TOKEN=" + pipeline.env.GITHUB_TOKEN
     dockerRun += " us-central1-docker.pkg.dev/endor-ci/public/endorctl:" + pipeline.params.ENDORCTL_VERSION
-    dockerRun += " --api " + pipeline.params.ENDOR_LABS_API
+    if (pipeline.env.ENDOR_LABS_API) {
+      dockerRun += " --api " + pipeline.env.ENDOR_LABS_API
+    }
     dockerRun += " --namespace " + pipeline.params.ENDOR_LABS_NAMESPACE
     dockerRun += " --api-key " + pipeline.env.ENDOR_LABS_API_KEY 
     dockerRun += " --api-secret " + pipeline.env.ENDOR_LABS_API_SECRET
@@ -51,7 +55,9 @@ class syncOrg implements Serializable {
     def dockerRun = "docker run --rm"
     dockerRun += " -e GITHUB_TOKEN=" + pipeline.env.GITHUB_TOKEN
     dockerRun += " us-central1-docker.pkg.dev/endor-ci/public/endorctl:" + pipeline.params.ENDORCTL_VERSION
-    dockerRun += " --api " + pipeline.params.ENDOR_LABS_API
+    if (pipeline.env.ENDOR_LABS_API) {
+      dockerRun += " --api " + pipeline.env.ENDOR_LABS_API
+    }
     dockerRun += " --namespace " + pipeline.params.ENDOR_LABS_NAMESPACE
     dockerRun += " --api-key " + pipeline.env.ENDOR_LABS_API_KEY 
     dockerRun += " --api-secret " + pipeline.env.ENDOR_LABS_API_SECRET
