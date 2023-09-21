@@ -12,7 +12,7 @@ class endorctlScan implements Serializable {
     // if (args['ENDORCTL_VERSION']) {
     //   cmd += "ENDOR_RELEASE=" + args['ENDORCTL_VERSION'] + " " 
     // }
-    def cmd += "./endorctl"
+    def cmd = "./endorctl"
     if (args['ENDOR_LABS_API']) {
       cmd += " --api " + args['ENDOR_LABS_API']
     }
