@@ -33,5 +33,6 @@ class checkout implements Serializable {
     cmdGitCredentialHelper += ' echo "password=${GITHUB_TOKEN}";'
     cmdGitCredentialHelper += " }; f'"
     pipeline.sh(cmdGitCredentialHelper)
+    return
   }
 }
