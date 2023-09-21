@@ -79,6 +79,7 @@ def generate_scan_stages(def targets, def project, def args) {
           checkout.clone(this, project)
           def branch = checkout.getDefaultBranch(this, project)
           checkout.execute(this, branch)
+          scan.uploadEndorctl(this)
           scan.execute(this, args, branch)
         } catch (err) {
           echo err.toString()

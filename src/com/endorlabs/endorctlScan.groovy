@@ -22,30 +22,22 @@ class endorctlScan implements Serializable {
     if (args['LOG_VERBOSE']) {
       cmd += " --verbose"
     }
-    pipeline.echo(cmd)
     cmd += " --log-level " + args['LOG_LEVEL']
-    pipeline.echo(cmd)
     cmd += " scan --path=" + pipeline.env.WORKSPACE
-    pipeline.echo(cmd)
     cmd += " --github-token " + pipeline.env.GITHUB_TOKEN
-    pipeline.echo(cmd)
     if (args['GITHUB_API_URL']) {
       cmd += " --github-api-url " + args['GITHUB_API_URL']
     }
-    pipeline.echo(cmd)
     if (branch) {
       cmd += " --as-default-branch --detached-ref-name=" + branch
     }
-    pipeline.echo(cmd)
     cmd += " --output-type " + args['SCAN_SUMMARY_OUTPUT_TYPE']
     if (args['LANGUAGES']) {
       cmd += " --languages " + args['LANGUAGES']
     }
-    pipeline.echo(cmd)
     if (args['ADDITIONAL_ARGS']) {
       cmd += " " + args['ADDITIONAL_ARGS']
     }
-    pipeline.echo(cmd)
     def hostName = pipeline.sh(returnStdout: true, script: "uname -n").trim()
     def path = pipeline.sh(returnStdout: true, script: "pwd").trim()
     pipeline.echo("Running endorctl scan in $path on $hostName")
