@@ -8,7 +8,7 @@ class dockerScan implements Serializable {
   def execute(def pipeline, def args, String branch) {
     def dockerRun = "docker run --rm"
     dockerRun += " -v " + pipeline.env.WORKSPACE + ":/root/endorlabs"
-    dockerRun += " us-central1-docker.pkg.dev/endor-ci/public/endorctl:" + pipeline.params.ENDORCTL_VERSION
+    dockerRun += " us-central1-docker.pkg.dev/endor-ci/public/endorctl:" + args['ENDORCTL_VERSION']
     if (args['ENDOR_LABS_API']) {
       dockerRun += " --api " + args['ENDOR_LABS_API']
     }
