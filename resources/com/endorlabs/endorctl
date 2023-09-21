@@ -1,0 +1,259 @@
+#!/usr/bin/env bash
+
+set -eo pipefail
+
+RED='\033[0;31m'
+YELLOW='\033[0;33m'
+BOLD_YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+LOCAL_CACHE=~/.cache/endorctl
+BASE_URL="https://storage.googleapis.com/endorlabs"
+ENDOR_API="https://api.endorlabs.com"
+if [[ -f "${HOME}/.endorctl/config.yaml" ]]; then
+  CONFIG=$(<~/.endorctl/config.yaml)
+  regexp_pattern=".*ENDOR_API: (https://api\.(staging\.)?endorlabs.com).*"
+  [[ "$CONFIG" =~ $regexp_pattern ]] && ENDOR_API="${BASH_REMATCH[1]}"
+fi
+
+function check_system() {
+  if [ "$MSYSTEM" == "MINGW64" ] || [ "$MSYSTEM" == "MINGW32" ]; then
+    echo -e "${RED}Running in Git Bash${NC}"
+    echo -e "${RED}Git Bash is not supported yet. Please download and use the Windows Version of 'endorctl'${NC}"
+    exit 1
+  elif [ "$CYGWIN" ]; then
+    echo -e "${RED}Running in Cygwin${NC}"
+    echo -e "${RED}Cygwin is not supported yet. Please download and use the Windows Version of 'endorctl'${NC}"
+    exit 1
+  elif [ "$WSL_DISTRO_NAME" ]; then
+    echo -e "${YELLOW}Running in Ubuntu on Windows (WSL)${NC}"
+  fi
+  exit_code=0
+  if [[ -z "$(which curl)" ]]; then
+    echo -e "${RED}ERROR: curl not found in PATH. Please install curl or update PATH${NC}"
+    exit_code=1
+  fi
+  if [[ -z "$(which sha256sum)" && -z "$(which shasum)" ]]; then
+    echo -e "${RED}ERROR: sha256sum or shasum not found in PATH. Please install either of them or update PATH${NC}"
+    exit_code=1
+  fi
+  if [[ -z "$(which jq)" ]]; then
+    echo -e "${RED}ERROR: jq not found in PATH. Please install jq or update PATH${NC}"
+    exit_code=1
+  fi
+  if [[ exit_code -eq 1 ]]; then
+    exit 1
+  fi
+  return
+}
+
+function get_os() {
+  sysname=$(uname -s)
+  lc_sysname=${sysname,,}
+  if [[ "$lc_sysname" == "darwin" ]]; then
+    lc_sysname=macos
+  fi
+  echo "${lc_sysname^^}"
+}
+
+function get_arch() {
+  arch=$(uname -m)
+  if [[ "$arch" == "x86_64" ]]; then
+    arch=amd64
+  fi
+  echo "${arch^^}"
+}
+
+function calculate_sha256() {
+  if [[ -n "$(which shasum)" ]]; then
+    shasum -a 256 "$1" | awk '{print $1}'
+  elif [[ -n "$(which sha256sum)" ]]; then
+    sha256sum "$1" | awk '{print $1}'
+  else
+    echo -e "${RED}ERROR: sha256sum or shasum not found in PATH. Please install either of them or update PATH${NC}"
+    exit 1
+  fi
+}
+
+function get_latest_version() {
+  meta=$(curl -s "${ENDOR_API}/meta/version")
+  version=$(echo "$meta" | jq -r .Service.Version)
+  if [[ -z "$version" || "$version" == "null" ]]; then
+    echo >&2 -e "${RED}ERROR: Failed to retrieve information from ${ENDOR_API}${NC}"
+    exit 1
+  fi
+  OS=$(get_os)
+  ARCH=$(get_arch)
+  checksum_key="ARCH_TYPE_${OS}_${ARCH}"
+  sha256=$(echo "$meta" | jq -r .ClientChecksums."$checksum_key")
+  file_name="endorctl_${version}_${OS,,}_${ARCH,,}"
+  url="$BASE_URL/$version/binaries/$file_name"
+  local values=("$version" "$file_name" "$sha256" "$url")
+  echo "${values[@]}"
+}
+
+function endorctl_download_latest() {
+  version="$1"
+  file_name="$2"
+  sha256="$3"
+  url="$4"
+  if [ ! -d "$LOCAL_CACHE" ]; then
+    mkdir -p "$LOCAL_CACHE"
+  fi
+  echo "$sha256 ${LOCAL_CACHE}/${file_name}" >"${LOCAL_CACHE}/${file_name}.sha"
+  echo -e "${YELLOW}Downloading ${url}${NC}"
+  curl -# -o "${LOCAL_CACHE}/${file_name}" "$url"
+  chmod 755 "${LOCAL_CACHE}/${file_name}"
+  if [[ -n "$(which sha256sum)" ]]; then
+    if sha256sum -c "${LOCAL_CACHE}/${file_name}.sha"; then
+      echo -e "${GREEN}sha256 checksum validation successful${NC}"
+    else
+      echo -e "${RED}sha256 checksum validation failed!${NC}"
+    fi
+  fi
+  rm -f "${LOCAL_CACHE}/endorctl"
+  echo -e "${YELLOW}Creating symbolic link ${LOCAL_CACHE}/endorctl${NC}"
+  ln -s "${LOCAL_CACHE}/${file_name}" "${LOCAL_CACHE}/endorctl"
+}
+
+function check_installed_version() {
+  symlink_path=${LOCAL_CACHE}/endorctl
+  if [[ ! -s ${symlink_path} ]]; then
+    rm -f "${symlink_path}"
+  else
+    target_path=$(readlink -f "$symlink_path")
+    if [[ -n "$(which sha256sum)" ]]; then
+      sha256sum -c "${target_path}.sha" >/dev/null 2>&1 || rm -f "${symlink_path}"
+    fi
+  fi
+}
+
+function get_installed_version() {
+  symlink_path=${LOCAL_CACHE}/endorctl
+  if [[ -s ${symlink_path} ]]; then
+    target_path=$(readlink -f "$symlink_path")
+    regex_pattern="v[0-9]+\.[0-9]+\.[0-9]+(-patch[0-9]+)?"
+    if [[ $target_path =~ $regex_pattern ]]; then
+      version_string="${BASH_REMATCH[0]}"
+      echo "$version_string"
+    fi
+  fi
+}
+
+function last_check() {
+  interval_hours=1
+  last_check_file="${LOCAL_CACHE}/last_check.txt"
+  if [ -e "$last_check_file" ]; then
+    last_check_timestamp=$(cat "$last_check_file")
+    current_timestamp=$(date +%s)
+    time_elapsed=$((current_timestamp - last_check_timestamp))
+    interval_seconds=$((interval_hours * 3600))
+    if [ "$time_elapsed" -lt "$interval_seconds" ]; then
+      echo "no"
+      return
+    fi
+  fi
+  echo "yes"
+}
+
+function set_last_check() {
+  last_check_file="${LOCAL_CACHE}/last_check.txt"
+  date +%s >"$last_check_file"
+}
+
+function use_older_endorctl() {
+  local old_version=$1
+  OS=$(get_os)
+  ARCH=$(get_arch)
+  local checksum_key="ARCH_TYPE_${OS}_${ARCH}"
+  local file_name="endorctl_${old_version}_${OS,,}_${ARCH,,}"
+  file_path="${LOCAL_CACHE}/${file_name}"
+  sha_file="${file_path}.sha"
+  if [ -f "$file_path" ]; then
+    if [ -f "$sha_file" ]; then
+      sha256sum -c "${sha_file}" >/dev/null 2>&1 &&
+        rm -f "${LOCAL_CACHE}/endorctl" &&
+        ln -s "$file_path" "${LOCAL_CACHE}/endorctl"
+    fi
+  else
+    echo -e "${YELLOW}For older version (${BOLD_YELLOW}${old_version}${YELLOW}) of endorctl, we cannot validate checksum of downloaded file."
+    read -r -p "Do you want to continue to download '${file_name}'? [y/N] " response
+    echo -e "${NC}"
+    case "$response" in
+    [yY][eE][sS] | [yY])
+      [[ ! -d "$LOCAL_CACHE" ]] && mkdir -p "$LOCAL_CACHE"
+      local url="${BASE_URL}/${old_version}/binaries/${file_name}"
+      echo -e "${YELLOW}Downloading ${url}${NC}"
+      curl -# -o "${LOCAL_CACHE}/${file_name}" "$url"
+      chmod 755 "${LOCAL_CACHE}/${file_name}"
+      [[ -n "$(which sha256sum)" ]] &&
+        sha256sum "${file_path}" >"${sha_file}" ||
+        shasum -a "${file_path}" >"${sha_file}"
+      rm -f "${LOCAL_CACHE}/endorctl"
+      echo -e "${YELLOW}Creating symbolic link ${LOCAL_CACHE}/endorctl${NC}"
+      ln -s "${file_path}" "${LOCAL_CACHE}/endorctl"
+      ;;
+    *)
+      echo -e "${YELLOW}Please unset environment variable ${NC}ENDOR_RELEASE${YELLOW} and delete ${NC}~/.cache/endorctl/last_check.txt${YELLOW} to download and use the latest version${NC}"
+      exit 1
+      ;;
+    esac
+  fi
+}
+
+function check_cache() {
+  version="$1"
+  OS=$(get_os)
+  ARCH=$(get_arch)
+  local checksum_key="ARCH_TYPE_${OS}_${ARCH}"
+  local file_name="endorctl_${version}_${OS,,}_${ARCH,,}"
+  file_path="${LOCAL_CACHE}/${file_name}"
+  sha_file="${file_path}.sha"
+  if [ -f "$sha_file" ]; then
+    sha256sum -c "${sha_file}" >/dev/null 2>&1 &&
+      rm -f "${LOCAL_CACHE}/endorctl" &&
+      ln -s "$file_path" "${LOCAL_CACHE}/endorctl"
+    echo "yes"
+  else
+    echo "no"
+  fi
+}
+
+function use_cache() {
+  version="$1"
+  OS=$(get_os)
+  ARCH=$(get_arch)
+  local checksum_key="ARCH_TYPE_${OS}_${ARCH}"
+  local file_name="endorctl_${version}_${OS,,}_${ARCH,,}"
+  file_path="${LOCAL_CACHE}/${file_name}"
+  rm -f "${LOCAL_CACHE}/endorctl"
+  ln -s "$file_path" "${LOCAL_CACHE}/endorctl"
+}
+
+function main() {
+  check_system
+  check_installed_version
+  current_version=$(get_installed_version)
+  if [[ -n "${ENDOR_RELEASE}" ]]; then
+    if [[ "${current_version}" != "${ENDOR_RELEASE}" ]]; then
+      use_older_endorctl "${ENDOR_RELEASE}"
+    fi
+  else
+    check_for_latest=$(last_check)
+    if [[ "$check_for_latest" == "yes" ]]; then
+      latest_endorctl_info=($(get_latest_version))
+      if [[ "${latest_endorctl_info[0]}" != "$current_version" ]]; then
+        available_in_cache=$(check_cache "${latest_endorctl_info[0]}")
+        if [[ "${available_in_cache}" == "no" ]]; then
+          endorctl_download_latest "${latest_endorctl_info[@]}"
+        else
+          use_cache "${latest_endorctl_info[@]}"
+        fi
+      fi
+      set_last_check
+    fi
+  fi
+  exec "$LOCAL_CACHE/endorctl" "$@"
+}
+
+main "$@"
