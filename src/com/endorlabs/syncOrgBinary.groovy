@@ -7,11 +7,10 @@ class syncOrgBinary implements Serializable {
   }
 
   def execute(def pipeline, def args) {
-    def cmd = ""
+    def cmd = "GITHUB_TOKEN=" + pipeline.env.GITHUB_TOKEN
     if (args['ENDORCTL_VERSION']) {
-      cmd += "ENDOR_RELEASE=" + args['ENDORCTL_VERSION'] + " "
+      cmd += " ENDOR_RELEASE=" + args['ENDORCTL_VERSION']
     }
-    cmd += "GITHUB_TOKEN=" + pipeline.env.GITHUB_TOKEN
     cmd += " ./endorctl"
     if (args['ENDOR_LABS_API']) {
       cmd += " --api " + args['ENDOR_LABS_API']
@@ -27,14 +26,16 @@ class syncOrgBinary implements Serializable {
     pipeline.sh(cmd)
   }
 
-  def projectCount(def pipeline) {
+  def projectCount(def pipeline, def args) {
     def cmd = "GITHUB_TOKEN=" + pipeline.env.GITHUB_TOKEN
-    if ( pipeline.params.ENDORCTL_VERSION != "latest" ) {
-      cmd += " ENDOR_RELEASE=" + pipeline.params.ENDORCTL_VERSION
+    if (args['ENDORCTL_VERSION']) {
+      cmd += " ENDOR_RELEASE=" + args['ENDORCTL_VERSION']
     }
-    cmd += " ./endorctl "
-    cmd += " --api " + pipeline.params.ENDOR_LABS_API
-    cmd += " --namespace " + pipeline.params.ENDOR_LABS_NAMESPACE
+    cmd += " ./endorctl"
+    if (args['ENDOR_LABS_API']) {
+      cmd += " --api " + args['ENDOR_LABS_API']
+    }
+    cmd += " --namespace " + args['ENDOR_LABS_NAMESPACE']
     cmd += " --api-key " + pipeline.env.ENDOR_LABS_API_KEY
     cmd += " --api-secret " + pipeline.env.ENDOR_LABS_API_SECRET
     cmd += " api list -r Project --count"
@@ -46,12 +47,14 @@ class syncOrgBinary implements Serializable {
 
   def getProjectList(def projects, def pipeline) {
     def cmd = "GITHUB_TOKEN=" + pipeline.env.GITHUB_TOKEN
-    if ( pipeline.params.ENDORCTL_VERSION != "latest" ) {
-      cmd += " ENDOR_RELEASE=" + pipeline.params.ENDORCTL_VERSION
+    if (args['ENDORCTL_VERSION']) {
+      cmd += " ENDOR_RELEASE=" + args['ENDORCTL_VERSION']
     }
-    cmd += " ./endorctl "
-    cmd += " --api " + pipeline.params.ENDOR_LABS_API
-    cmd += " --namespace " + pipeline.params.ENDOR_LABS_NAMESPACE
+    cmd += " ./endorctl"
+    if (args['ENDOR_LABS_API']) {
+      cmd += " --api " + args['ENDOR_LABS_API']
+    }
+    cmd += " --namespace " + args['ENDOR_LABS_NAMESPACE']
     cmd += " --api-key " + pipeline.env.ENDOR_LABS_API_KEY
     cmd += " --api-secret " + pipeline.env.ENDOR_LABS_API_SECRET
     cmd += " api list -r Project"
