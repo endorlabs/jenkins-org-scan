@@ -6,6 +6,7 @@ def dockerScan = new dockerScan()
 def syncOrg = new syncOrg()
 def args = [:]
 getParameters(args)
+def projects = []
 
 pipeline {
   agent {
@@ -38,12 +39,19 @@ pipeline {
         }
       }
     }
+    stage("Get Project List") {
+      steps {
+        script {
+          syncOrg.getProjectList(projects, this, args)
+          echo "List of Projects:\n" + projects.join("\n")
+        }
+      }
+    }
     stage("Trigger Parallel Scan") {
       steps {
         script {
-          def projects = []
-          syncOrg.getProjectList(projects, this, args)
           def parallellExecutor = args['NO_OF_THREADS'].toInteger()
+          echo "No. of Parallel Scans allowed: " + args['NO_OF_THREADS']
           def repository_group = projects.collate parallellExecutor
           for (def repos : repository_group) {
             def targets = [:]
@@ -65,10 +73,10 @@ def generate_scan_stages(def targets, def project, def args) {
     String projectName = projectName(project)
     String stageName = "Scan " + projectName
     node(args['AGENT_LABEL']) {
-      stage("Scan $projectName") {
+      stage(stageName) {
         try {
           checkout.setCredentialHelper(this)
-          def branch = checkout.getDefaultBranch(this)
+          def branch = checkout.getDefaultBranch(this, project)
           checkout.https(this, project, branch)
           dockerScan.execute(this, args, branch)
         } catch (err) {
