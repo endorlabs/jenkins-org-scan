@@ -2,27 +2,14 @@ package com.endorlabs
 import groovy.json.JsonSlurper
 
 class checkout implements Serializable {
-  private String hostName
-  private String path
-  private String project
-  private String branch
 
   def call(def pipeline, String url) {
     return https(pipeline, url)
   }
 
-  def getHostName(def pipeline) {
-    this.hostName = pipeline.sh(returnStdout: true, script: "uname -n").trim()
-    return hostName
-  }
-
-  def getCurrentPath(def pipeline) {
-    this.path = pipeline.sh(returnStdout: true, script: "pwd").trim()
-    return path
-  }
-
-  
   def clone(def pipeline, String url) {
+    def hostName = pipeline.sh(returnStdout: true, script: "uname -n").trim()
+    def path = pipeline.sh(returnStdout: true, script: "pwd").trim()
     def gitClone = "GITHUB_TOKEN=" + pipeline.env.GITHUB_TOKEN
     gitClone += " git clone " + url + " ."
     pipeline.sh(gitClone)
@@ -32,7 +19,7 @@ class checkout implements Serializable {
 
   def checkout(def pipeline, def branch) {
     def checkoutBranch = "git checkout " + branch
-    pipeline.echo("Checked out branch $branch of $project")
+    pipeline.echo("Checked out branch '$branch'")
     pipeline.sh(checkoutBranch)
   }
 
