@@ -48,7 +48,7 @@ pipeline {
           for (def repos : repository_group) {
             def targets = [:]
             for (String project : repos) {
-              generate_scan_stages(targets, project, args['AGENT_LABEL'])
+              generate_scan_stages(targets, project, args)
             }
             parallel targets
           }
@@ -58,19 +58,19 @@ pipeline {
   }
 }
 
-def generate_scan_stages(def targets, def project, def agent_label) {
+def generate_scan_stages(def targets, def project, def args) {
   targets[project] = {
     def dockerScan = new dockerScan()
     def checkout = new checkout()
     String projectName = projectName(project)
     String stageName = "Scan " + projectName
-    node(agent_label) {
+    node(args['AGENT_LABEL']) {
       stage("Scan $projectName") {
         try {
           checkout.setCredentialHelper(this)
-          def branch = checkout.getDefaultBranch(this, args)
+          def branch = checkout.getDefaultBranch(this)
           checkout.https(this, project, branch)
-          dockerScan.execute(this, branch)
+          dockerScan.execute(this, args, branch)
         } catch (err) {
           echo err.toString()
           unstable("endorctl Scan failed for ${project}")

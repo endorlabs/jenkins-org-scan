@@ -18,8 +18,8 @@ class checkout implements Serializable {
     return defaultBranch
   }
 
-  def getDefaultBranch(def pipeline, def args) {
-    def cmdGetDefaultBranch = "GITHUB_TOKEN=" + args['GITHUB_TOKEN']
+  def getDefaultBranch(def pipeline) {
+    def cmdGetDefaultBranch = "GITHUB_TOKEN=" + pipeline.env.GITHUB_TOKEN
     cmdGetDefaultBranch += " git remote show " + url 
     cmdGetDefaultBranch += "  | grep 'HEAD branch' | cut -d' ' -f5"
     def defaultBranch = pipeline.sh(returnStdout: true, script: cmdGetDefaultBranch).trim()
