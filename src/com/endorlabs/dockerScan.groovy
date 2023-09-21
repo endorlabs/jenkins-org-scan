@@ -20,9 +20,9 @@ class dockerScan implements Serializable {
     }
     dockerRun += " --log-level " + pipeline.params.LOG_LEVEL + " scan --path=/root/endorlabs "
     dockerRun += " --github-token " + pipeline.env.GITHUB_TOKEN
-    // if (branch) {
-    //   dockerRun += " --as-default-branch --detached-ref-name=" + branch
-    // }
+    if (branch) {
+      dockerRun += " --as-default-branch --detached-ref-name=" + branch
+    }
     dockerRun += " --output-type " + pipeline.params.SCAN_SUMMARY_OUTPUT_TYPE
     if (pipeline.params.LANGUAGES) {
       dockerRun += " --languages " + pipeline.params.LANGUAGES

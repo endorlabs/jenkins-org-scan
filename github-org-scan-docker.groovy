@@ -70,7 +70,7 @@ def generate_scan_stages(def targets, def project, def agent_label) {
           checkout.setCredentialHelper(this)
           def branch = checkout.getDefaultBranch(this, args)
           checkout.https(this, project, branch)
-          dockerScan.execute(this)
+          dockerScan.execute(this, branch)
         } catch (err) {
           unstable("endorctl Scan failed for ${project}")
         }
