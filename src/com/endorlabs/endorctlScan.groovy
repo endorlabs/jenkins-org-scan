@@ -8,11 +8,11 @@ class endorctlScan implements Serializable {
   }
 
   def execute(def pipeline, def args, String branch) {
-    // String cmd = ""
-    // if (args['ENDORCTL_VERSION']) {
-    //   cmd += "ENDOR_RELEASE=" + args['ENDORCTL_VERSION'] + " " 
-    // }
-    def cmd = "./endorctl"
+    String cmd = ""
+    if (args['ENDORCTL_VERSION']) {
+      cmd += "ENDOR_RELEASE=" + args['ENDORCTL_VERSION'] + " " 
+    }
+    cmd += "./endorctl"
     if (args['ENDOR_LABS_API']) {
       cmd += " --api " + args['ENDOR_LABS_API']
     }
@@ -26,7 +26,7 @@ class endorctlScan implements Serializable {
     cmd += " scan --path=" + + pipeline.env.WORKSPACE
     cmd += " --github-token " + pipeline.env.GITHUB_TOKEN
     if (args['GITHUB_API_URL']) {
-      dockerRun += " --github-api-url " + args['GITHUB_API_URL']
+      cmd += " --github-api-url " + args['GITHUB_API_URL']
     }
     if (branch) {
       cmd += " --as-default-branch --detached-ref-name=" + branch
