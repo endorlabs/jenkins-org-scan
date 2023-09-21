@@ -5,30 +5,30 @@ class dockerScan implements Serializable {
     return execute(pipeline)
   }
 
-  def execute(def pipeline, String branch) {
+  def execute(def pipeline, def args, String branch) {
     def dockerRun = "docker run --rm"
     dockerRun += " -v " + pipeline.env.WORKSPACE + ":/root/endorlabs"
     dockerRun += " us-central1-docker.pkg.dev/endor-ci/public/endorctl:" + pipeline.params.ENDORCTL_VERSION
-    if (pipeline.env.ENDOR_LABS_API) {
-      dockerRun += " --api " + pipeline.env.ENDOR_LABS_API
+    if (args['ENDOR_LABS_API']) {
+      dockerRun += " --api " + args['ENDOR_LABS_API']
     }
-    dockerRun += " --namespace " + pipeline.params.ENDOR_LABS_NAMESPACE
+    dockerRun += " --namespace " + args['ENDOR_LABS_NAMESPACE']
     dockerRun += " --api-key " + pipeline.env.ENDOR_LABS_API_KEY
     dockerRun += " --api-secret " + pipeline.env.ENDOR_LABS_API_SECRET
-    if (pipeline.params.LOG_VERBOSE) {
+    if (args['LOG_VERBOSE']) {
       dockerRun += " --verbose"
     }
-    dockerRun += " --log-level " + pipeline.params.LOG_LEVEL + " scan --path=/root/endorlabs "
+    dockerRun += " --log-level " + args['LOG_LEVEL'] + " scan --path=/root/endorlabs "
     dockerRun += " --github-token " + pipeline.env.GITHUB_TOKEN
     if (branch) {
       dockerRun += " --as-default-branch --detached-ref-name=" + branch
     }
-    dockerRun += " --output-type " + pipeline.params.SCAN_SUMMARY_OUTPUT_TYPE
-    if (pipeline.params.LANGUAGES) {
-      dockerRun += " --languages " + pipeline.params.LANGUAGES
+    dockerRun += " --output-type " + args['SCAN_SUMMARY_OUTPUT_TYPE']
+    if (args['LANGUAGES']) {
+      dockerRun += " --languages " + args['LANGUAGES']
     }
-    if (pipeline.params.ADDITIONAL_ARGS) {
-      dockerRun += " " + pipeline.params.ADDITIONAL_ARGS
+    if (args['ADDITIONAL_ARGS']) {
+      dockerRun += " " + args['ADDITIONAL_ARGS']
     }
     def hostName = pipeline.sh(returnStdout: true, script: "uname -n").trim()
     def path = pipeline.sh(returnStdout: true, script: "pwd").trim()

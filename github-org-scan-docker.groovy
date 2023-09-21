@@ -152,6 +152,13 @@ def getParameters(def args) {
   } else {
     args['NO_OF_THREADS'] = 5
   }
+  if (params.ENDOR_LABS_API) {
+    args['ENDOR_LABS_API'] = params.ENDOR_LABS_API
+  } else if (env.ENDOR_LABS_API) {
+    args['ENDOR_LABS_API'] = env.ENDOR_LABS_API
+  } else {
+    args['ENDOR_LABS_API'] = ''
+  }
   // if (env.GITHUB_TOKEN) {
   //   args['GITHUB_TOKEN'] = env.GITHUB_TOKEN
   // } else {
