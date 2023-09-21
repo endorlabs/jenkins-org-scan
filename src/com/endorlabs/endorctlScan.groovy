@@ -9,8 +9,6 @@ class endorctlScan implements Serializable {
 
   def execute(def pipeline, def args, String branch) {
     String cmd = ""
-    pipeline.echo("Helllo!")
-    pipeline.echo(cmd)
     if (args['ENDORCTL_VERSION']) {
       cmd += "ENDOR_RELEASE=" + args['ENDORCTL_VERSION'] + " " 
     }
@@ -18,7 +16,6 @@ class endorctlScan implements Serializable {
     if (args['ENDOR_LABS_API']) {
       cmd += " --api " + args['ENDOR_LABS_API']
     }
-    pipeline.echo(cmd)
     cmd += " --namespace " + args['ENDOR_LABS_NAMESPACE']
     cmd += " --api-key " + pipeline.env.ENDOR_LABS_API_KEY
     cmd += " --api-secret " + pipeline.env.ENDOR_LABS_API_SECRET
@@ -27,7 +24,9 @@ class endorctlScan implements Serializable {
     }
     pipeline.echo(cmd)
     cmd += " --log-level " + args['LOG_LEVEL']
-    cmd += " scan --path=" + + pipeline.env.WORKSPACE
+    pipeline.echo(cmd)
+    cmd += " scan --path=" + pipeline.env.WORKSPACE
+    pipeline.echo(cmd)
     cmd += " --github-token " + pipeline.env.GITHUB_TOKEN
     pipeline.echo(cmd)
     if (args['GITHUB_API_URL']) {
