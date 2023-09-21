@@ -16,7 +16,7 @@ class checkout implements Serializable {
     return defaultBranch
   }
 
-  def checkout(def pipeline, def branch) {
+  def execute(def pipeline, def branch) {
     def checkoutBranch = "git checkout " + branch
     pipeline.echo("Checked out branch '$branch'")
     pipeline.sh(checkoutBranch)
