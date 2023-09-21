@@ -13,7 +13,7 @@ class checkout implements Serializable {
     gitClone += " git clone " + url + " ."
     pipeline.sh(gitClone)
     pipeline.echo("Cloned $url in $path on $hostName")
-    return defaultBranch
+    return
   }
 
   def execute(def pipeline, def branch) {
