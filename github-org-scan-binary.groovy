@@ -1,6 +1,6 @@
 @Library("endor-shared-lib@binary") _
 import com.endorlabs.endorctlScan
-import com.endorlabs.syncOrg
+import com.endorlabs.syncOrgBinary
 import com.endorlabs.checkout
 def scan = new endorctlScan()
 def syncOrg = new syncOrgBinary()
