@@ -19,7 +19,6 @@ class syncOrgBinary implements Serializable {
     cmd += " --namespace " + args['ENDOR_LABS_NAMESPACE']
     cmd += " --api-key " + pipeline.env.ENDOR_LABS_API_KEY
     cmd += " --api-secret " + pipeline.env.ENDOR_LABS_API_SECRET
-    cmd += " --github-token " + pipeline.env.GITHUB_TOKEN
     cmd += " sync-org"
     if (args['GITHUB_API_URL']) {
       cmd += " --github-api-url " + pipeline.params.GITHUB_API_URL
