@@ -2,7 +2,6 @@ package com.endorlabs
 import groovy.json.JsonSlurper
 
 class checkout implements Serializable {
-
   def call(def pipeline, String url) {
     return https(pipeline, url)
   }

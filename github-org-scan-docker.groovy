@@ -106,6 +106,13 @@ def getParameters(def args) {
   } else {
     error "ERROR: Agent Label is Mandatory. It should made available as AGENT_LABEL"
   }
+  if (params.GITHUB_ORG) {
+    args['GITHUB_ORG'] = params.GITHUB_ORG
+  } else if (env.GITHUB_ORG) {
+    args['GITHUB_ORG'] = env.GITHUB_ORG
+  } else {
+    error "ERROR: Github Org Info is Mandatory. It should be made available as GITHUB_ORG"
+  }
   if (params.ENDORCTL_VERSION) {
     args['ENDORCTL_VERSION'] = params.ENDORCTL_VERSION
   } else if (env.ENDORCTL_VERSION) {
