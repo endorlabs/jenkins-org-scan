@@ -45,7 +45,7 @@ class syncOrgBinary implements Serializable {
     return data.count_response.count
   }
 
-  def getProjectList(def projects, def pipeline) {
+  def getProjectList(def projects, def pipeline, def args) {
     def cmd = "GITHUB_TOKEN=" + pipeline.env.GITHUB_TOKEN
     if (args['ENDORCTL_VERSION']) {
       cmd += " ENDOR_RELEASE=" + args['ENDORCTL_VERSION']
