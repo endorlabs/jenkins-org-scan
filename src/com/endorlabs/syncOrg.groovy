@@ -8,14 +8,14 @@ class syncOrg implements Serializable {
 
   def execute(def pipeline, def args) {
     def dockerRun = "docker run --rm"
-    dockerRun += " -e GITHUB_TOKEN=" + args['GITHUB_TOKEN']
+    dockerRun += " -e GITHUB_TOKEN=" + pipeline.env.GITHUB_TOKEN
     dockerRun += " us-central1-docker.pkg.dev/endor-ci/public/endorctl:" + args['ENDORCTL_VERSION']
     if (args['ENDOR_LABS_API']) {
       dockerRun += " --api " + args['ENDOR_LABS_API']
     }
     dockerRun += " --namespace " + args['ENDOR_LABS_NAMESPACE']
-    dockerRun += " --api-key " + args['ENDOR_LABS_API_KEY']
-    dockerRun += " --api-secret " + args['ENDOR_LABS_API_SECRET']
+    dockerRun += " --api-key " + pipeline.env.ENDOR_LABS_API_KEY
+    dockerRun += " --api-secret " + pipeline.env.ENDOR_LABS_API_SECRET
     dockerRun += " sync-org"
     if (args['GITHUB_API_URL']) {
       dockerRun += " --github-api-url " + args['GITHUB_API_URL']
@@ -26,14 +26,14 @@ class syncOrg implements Serializable {
 
   def getProjectCount(def pipeline, def args) {
     def dockerRun = "docker run --rm"
-    dockerRun += " -e GITHUB_TOKEN=" + args['GITHUB_TOKEN']
+    dockerRun += " -e GITHUB_TOKEN=" + pipeline.env.GITHUB_TOKEN
     dockerRun += " us-central1-docker.pkg.dev/endor-ci/public/endorctl:" + args['ENDORCTL_VERSION']
     if (args['ENDOR_LABS_API']) {
       dockerRun += " --api " + args['ENDOR_LABS_API']
     }
     dockerRun += " --namespace " + args['ENDOR_LABS_NAMESPACE']
-    dockerRun += " --api-key " + args['ENDOR_LABS_API_KEY']
-    dockerRun += " --api-secret " + args['ENDOR_LABS_API_SECRET']
+    dockerRun += " --api-key " + pipeline.env.ENDOR_LABS_API_KEY
+    dockerRun += " --api-secret " + pipeline.env.ENDOR_LABS_API_SECRET
     dockerRun += " api list -r Project --count"
     def jsonTxt = pipeline.sh(returnStdout: true, script: dockerRun).trim()
     def jsonSlurper = new JsonSlurper()
@@ -43,14 +43,14 @@ class syncOrg implements Serializable {
 
   def getProjectList(def projects, def pipeline, def args) {
     def dockerRun = "docker run --rm"
-    dockerRun += " -e GITHUB_TOKEN=" + args['GITHUB_TOKEN']
+    dockerRun += " -e GITHUB_TOKEN=" + pipeline.env.GITHUB_TOKEN
     dockerRun += " us-central1-docker.pkg.dev/endor-ci/public/endorctl:" + args['ENDORCTL_VERSION']
     if (args['ENDOR_LABS_API']) {
       dockerRun += " --api " + args['ENDOR_LABS_API']
     }
     dockerRun += " --namespace " + args['ENDOR_LABS_NAMESPACE']
-    dockerRun += " --api-key " + args['ENDOR_LABS_API_KEY']
-    dockerRun += " --api-secret " + args['ENDOR_LABS_API_SECRET']
+    dockerRun += " --api-key " + pipeline.env.ENDOR_LABS_API_KEY
+    dockerRun += " --api-secret " + pipeline.env.ENDOR_LABS_API_SECRET
     dockerRun += " api list -r Project"
     def jsonTxt = pipeline.sh(returnStdout: true, script: dockerRun).trim()
     def jsonSlurper = new JsonSlurper()
