@@ -27,7 +27,6 @@ class checkout implements Serializable {
     cmdGetDefaultBranch += " git remote show " + url 
     cmdGetDefaultBranch += "  | grep 'HEAD branch' | cut -d' ' -f5"
     def defaultBranch = pipeline.sh(returnStdout: true, script: cmdGetDefaultBranch).trim()
-    this.branch = defaultBranch
     return defaultBranch
   }
 
