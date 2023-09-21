@@ -6,18 +6,21 @@ class syncOrgBinary implements Serializable {
     return execute(pipeline)
   }
 
-  def execute(def pipeline) {
-    def cmd = "GITHUB_TOKEN=" + pipeline.env.GITHUB_TOKEN
-    if ( pipeline.params.ENDORCTL_VERSION != "latest" ) {
-      cmd += " ENDOR_RELEASE=" + pipeline.params.ENDORCTL_VERSION
+  def execute(def pipeline, def args) {
+    def cmd = ""
+    if (args['ENDORCTL_VERSION']) {
+      cmd += "ENDOR_RELEASE=" + args['ENDORCTL_VERSION'] + " " 
+    } 
+    cmd += "./endorctl"
+    if (args['ENDOR_LABS_API']) {
+      cmd += " --api " + args['ENDOR_LABS_API']
     }
-    cmd += " ./endorctl "
-    cmd += " --api " + pipeline.params.ENDOR_LABS_API
-    cmd += " --namespace " + pipeline.params.ENDOR_LABS_NAMESPACE
+    cmd += " --namespace " + args['ENDOR_LABS_NAMESPACE']
     cmd += " --api-key " + pipeline.env.ENDOR_LABS_API_KEY
     cmd += " --api-secret " + pipeline.env.ENDOR_LABS_API_SECRET
+    cmd += " --github-token " + pipeline.env.GITHUB_TOKEN
     cmd += " sync-org"
-    if (pipeline.params.GITHUB_API_URL) {
+    if (args['GITHUB_API_URL']) {
       cmd += " --github-api-url " + pipeline.params.GITHUB_API_URL
     }
     cmd += " --name " + pipeline.params.GITHUB_ORG

@@ -7,7 +7,7 @@ class endorctlScan implements Serializable {
     return execute(pipeline)
   }
 
-  def execute(def pipeline) {
+  def execute(def pipeline, def args) {
     def cmd = ""
     if (args['ENDORCTL_VERSION']) {
       cmd += "ENDOR_RELEASE=" + args['ENDORCTL_VERSION'] + " " 
@@ -25,6 +25,9 @@ class endorctlScan implements Serializable {
     cmd += " --log-level " + args['LOG_LEVEL']
     cmd += " scan --path=" + + pipeline.env.WORKSPACE
     cmd += " --github-token " + pipeline.env.GITHUB_TOKEN
+    if (args['GITHUB_API_URL']) {
+      dockerRun += " --github-api-url " + args['GITHUB_API_URL']
+    }
     if (branch) {
       cmd += " --as-default-branch --detached-ref-name=" + branch
     }
@@ -41,15 +44,16 @@ class endorctlScan implements Serializable {
     pipeline.sh(cmd)
   }
 
-  def runHostCheck(def pipeline) {
+  def runHostCheck(def pipeline, def args) {
     def cmd = ""
-    if ( pipeline.params.ENDORCTL_VERSION != "latest" ) {
-      cmd += "ENDOR_RELEASE=" + pipeline.params.ENDORCTL_VERSION + " ./endorctl"
-    } else {
-      cmd += "./endorctl"
+    if (args['ENDORCTL_VERSION']) {
+      cmd += "ENDOR_RELEASE=" + args['ENDORCTL_VERSION'] + " " 
+    } 
+    cmd += "./endorctl"
+    if (args['ENDOR_LABS_API']) {
+      cmd += " --api " + args['ENDOR_LABS_API']
     }
-    cmd += " --api " + pipeline.params.ENDOR_LABS_API
-    cmd += " --namespace " + pipeline.params.ENDOR_LABS_NAMESPACE
+    cmd += " --namespace " + args['ENDOR_LABS_NAMESPACE']
     cmd += " --api-key " + pipeline.env.ENDOR_LABS_API_KEY
     cmd += " --api-secret " + pipeline.env.ENDOR_LABS_API_SECRET
     cmd += " host-check"
