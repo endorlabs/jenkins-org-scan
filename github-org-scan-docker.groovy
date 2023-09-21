@@ -152,19 +152,19 @@ def getParameters(def args) {
   } else {
     args['NO_OF_THREADS'] = 5
   }
-  if (env.GITHUB_TOKEN) {
-    args['GITHUB_TOKEN'] = env.GITHUB_TOKEN
-  } else {
-    error "ERROR: Github Access Token should be made available as GITHUB_TOKEN"
-  }
-  if (env.ENDOR_LABS_API_KEY) {
-    args['ENDOR_LABS_API_KEY'] = env.ENDOR_LABS_API_KEY
-  } else {
-    error "ERROR: Endor Labs API Key is required and should be made available as ENDOR_LABS_API_KEY"
-  }
-  if (env.ENDOR_LABS_API_SECRET) {
-    args['ENDOR_LABS_API_SECRET'] = env.ENDOR_LABS_API_SECRET
-  } else {
-    error "ERROR: Endor Labs API Secret is required and should be made available as ENDOR_LABS_API_SECRET"
-  }
+  // if (env.GITHUB_TOKEN) {
+  //   args['GITHUB_TOKEN'] = env.GITHUB_TOKEN
+  // } else {
+  //   error "ERROR: Github Access Token should be made available as GITHUB_TOKEN"
+  // }
+  // if (env.ENDOR_LABS_API_KEY) {
+  //   args['ENDOR_LABS_API_KEY'] = env.ENDOR_LABS_API_KEY
+  // } else {
+  //   error "ERROR: Endor Labs API Key is required and should be made available as ENDOR_LABS_API_KEY"
+  // }
+  // if (env.ENDOR_LABS_API_SECRET) {
+  //   args['ENDOR_LABS_API_SECRET'] = env.ENDOR_LABS_API_SECRET
+  // } else {
+  //   error "ERROR: Endor Labs API Secret is required and should be made available as ENDOR_LABS_API_SECRET"
+  // }
 }
