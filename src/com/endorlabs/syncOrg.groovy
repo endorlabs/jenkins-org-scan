@@ -17,8 +17,18 @@ class syncOrg implements Serializable {
     dockerRun += " sync-org"
     if (pipeline.params.GITHUB_API_URL) {
       dockerRun += " --github-api-url " + pipeline.params.GITHUB_API_URL
+    } else if ( pipeline.env.GITHUB_API_URL ) {
+      dockerRun += " --github-api-url " + pipeline.env.GITHUB_API_URL
     }
-    dockerRun += " --name " + pipeline.params.GITHUB_ORG
+    if (pipeline.params.GITHUB_ORG) {
+      dockerRun += " --name " + pipeline.params.GITHUB_ORG
+    } else if (pipeline.env.GITHUB_ORG) {
+      dockerRun += " --name " + pipeline.env.GITHUB_ORG
+    } else {
+      pipeline.currentBuild.result = 'FAILURE'
+      pipeline.error "GITHUB_ORG should be specified as a Parameter or Environment Variable"
+    }
+    
     pipeline.sh(dockerRun)
   }
 

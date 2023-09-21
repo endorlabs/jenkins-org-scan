@@ -27,21 +27,9 @@ pipeline {
       trim: true
     )
     string(
-      name: 'GITHUB_ORG',
-      description: 'Github Org',
-      defaultValue: 'endorlabstest',
-      trim: true
-    )
-    string(
       name: 'ENDORCTL_VERSION',
       description: 'Endor Version',
       defaultValue: 'latest',
-      trim: true
-    )
-    string(
-      name: 'ENDOR_LABS_API',
-      description: 'Sets the API URL for the Endor Labs Application',
-      defaultValue: 'https://api.staging.endorlabs.com',
       trim: true
     )
     string(
