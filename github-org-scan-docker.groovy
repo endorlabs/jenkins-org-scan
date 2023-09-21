@@ -78,7 +78,7 @@ def generate_scan_stages(def targets, def project, def args) {
           checkout.setCredentialHelper(this)
           checkout.clone(this, project)
           def branch = checkout.getDefaultBranch(this, project)
-          checkout.checkout(this, branch)
+          checkout.execute(this, branch)
           dockerScan.execute(this, args, branch)
         } catch (err) {
           echo err.toString()
