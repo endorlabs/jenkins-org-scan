@@ -7,7 +7,7 @@ class endorctlScan implements Serializable {
     return execute(pipeline)
   }
 
-  def execute(def pipeline, def args) {
+  def execute(def pipeline, def args, String branch) {
     def cmd = ""
     if (args['ENDORCTL_VERSION']) {
       cmd += "ENDOR_RELEASE=" + args['ENDORCTL_VERSION'] + " " 
