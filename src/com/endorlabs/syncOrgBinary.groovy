@@ -9,9 +9,10 @@ class syncOrgBinary implements Serializable {
   def execute(def pipeline, def args) {
     def cmd = ""
     if (args['ENDORCTL_VERSION']) {
-      cmd += "ENDOR_RELEASE=" + args['ENDORCTL_VERSION'] + " " 
-    } 
-    cmd += "./endorctl"
+      cmd += "ENDOR_RELEASE=" + args['ENDORCTL_VERSION'] + " "
+    }
+    cmd += "GITHUB_TOKEN=" + pipeline.env.GITHUB_TOKEN
+    cmd += " ./endorctl"
     if (args['ENDOR_LABS_API']) {
       cmd += " --api " + args['ENDOR_LABS_API']
     }
