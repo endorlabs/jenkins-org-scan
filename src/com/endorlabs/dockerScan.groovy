@@ -28,7 +28,7 @@ class dockerScan implements Serializable {
     if (args['GITHUB_API_URL']) {
       dockerRun += " --github-api-url " + args['GITHUB_API_URL']
     }
-    if (args['GITHUB_CA_CERT') {
+    if (args['GITHUB_CA_CERT']) {
       createCaCertFile(pipeline, args)
       dockerRun += " --github-ca-path ./caCert.pem"
     }
