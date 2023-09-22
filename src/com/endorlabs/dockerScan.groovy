@@ -5,7 +5,7 @@ class dockerScan implements Serializable {
     return execute(pipeline)
   }
 
-  def execute(def pipeline, def args, String branch) {
+  def execute(def pipeline, def args, String project, String branch) {
     def dockerRun = "docker run --rm"
     dockerRun += " -v " + pipeline.env.WORKSPACE + ":/root/endorlabs"
     dockerRun += " us-central1-docker.pkg.dev/endor-ci/public/endorctl:" + args['ENDORCTL_VERSION']
@@ -20,8 +20,17 @@ class dockerScan implements Serializable {
     }
     dockerRun += " --log-level " + args['LOG_LEVEL'] + " scan --path=/root/endorlabs "
     dockerRun += " --github-token " + pipeline.env.GITHUB_TOKEN
+    dockerRun += " --enable github,git,analytics"
+    dockerRun += " --repository-http-clone-url " + project
     if (branch) {
       dockerRun += " --as-default-branch --detached-ref-name=" + branch
+    }
+    if (args['GITHUB_API_URL']) {
+      dockerRun += " --github-api-url " + args['GITHUB_API_URL']
+    }
+    if (args['GITHUB_CA_CERT') {
+      createCaCertFile(pipeline, args)
+      dockerRun += " --github-ca-path ./caCert.pem"
     }
     dockerRun += " --output-type " + args['SCAN_SUMMARY_OUTPUT_TYPE']
     if (args['LANGUAGES']) {
@@ -34,5 +43,10 @@ class dockerScan implements Serializable {
     def path = pipeline.sh(returnStdout: true, script: "pwd").trim()
     pipeline.echo("Running endorctl scan in $path on $hostName")
     pipeline.sh(dockerRun)
+  }
+
+  def createCaCertFile(def pipeline, def args) {
+    pipeline.writeFile file: "caCert.pem", text: args['GITHUB_CA_CERT']
+    pipeline.sh("chmod 644 ./caCert.pem")
   }
 }

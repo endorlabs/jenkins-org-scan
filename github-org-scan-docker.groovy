@@ -79,7 +79,7 @@ def generate_scan_stages(def targets, def project, def args) {
           checkout.clone(this, project)
           def branch = checkout.getDefaultBranch(this, project)
           checkout.execute(this, branch)
-          dockerScan.execute(this, args, branch)
+          dockerScan.execute(this, args, project, branch)
         } catch (err) {
           echo err.toString()
           unstable("endorctl Scan failed for ${project}")
@@ -152,15 +152,11 @@ def getParameters(def args) {
     args['LANGUAGES'] = params.LANGUAGES
   } else if (env.LANGUAGES) {
     args['LANGUAGES'] = env.LANGUAGES
-  } else {
-    args['LANGUAGES'] = ''
   }
   if (params.ADDITIONAL_ARGS) {
     args['ADDITIONAL_ARGS'] = params.ADDITIONAL_ARGS
   } else if (env.ADDITIONAL_ARGS) {
     args['ADDITIONAL_ARGS'] = env.ADDITIONAL_ARGS
-  } else {
-    args['ADDITIONAL_ARGS'] = ''
   }
   if (params.NO_OF_THREADS) {
     args['NO_OF_THREADS'] = params.NO_OF_THREADS
@@ -173,22 +169,20 @@ def getParameters(def args) {
     args['ENDOR_LABS_API'] = params.ENDOR_LABS_API
   } else if (env.ENDOR_LABS_API) {
     args['ENDOR_LABS_API'] = env.ENDOR_LABS_API
-  } else {
-    args['ENDOR_LABS_API'] = ''
   }
-  // if (env.GITHUB_TOKEN) {
-  //   args['GITHUB_TOKEN'] = env.GITHUB_TOKEN
-  // } else {
-  //   error "ERROR: Github Access Token should be made available as GITHUB_TOKEN"
-  // }
-  // if (env.ENDOR_LABS_API_KEY) {
-  //   args['ENDOR_LABS_API_KEY'] = env.ENDOR_LABS_API_KEY
-  // } else {
-  //   error "ERROR: Endor Labs API Key is required and should be made available as ENDOR_LABS_API_KEY"
-  // }
-  // if (env.ENDOR_LABS_API_SECRET) {
-  //   args['ENDOR_LABS_API_SECRET'] = env.ENDOR_LABS_API_SECRET
-  // } else {
-  //   error "ERROR: Endor Labs API Secret is required and should be made available as ENDOR_LABS_API_SECRET"
-  // }
+  if (params.GITHUB_API_URL) {
+    args['GITHUB_API_URL'] = params.GITHUB_API_URL
+  } else if (env.GITHUB_API_URL) {
+    args['GITHUB_API_URL'] = env.GITHUB_API_URL
+  }
+  if (params.GITHUB_CA_CERT) {
+    args['GITHUB_CA_CERT'] = params.GITHUB_CA_CERT
+  } else if (env.GITHUB_CA_CERT) {
+    args['GITHUB_CA_CERT'] = env.GITHUB_CA_CERT
+  }
+  if (params.GITHUB_CERT_VERIFY) {
+    args['GITHUB_CERT_VERIFY'] = params.GITHUB_CERT_VERIFY
+  } else if (env.GITHUB_CERT_VERIFY) {
+    args['GITHUB_CERT_VERIFY'] = env.GITHUB_CERT_VERIFY
+  }
 }
