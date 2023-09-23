@@ -7,7 +7,7 @@ class checkout implements Serializable {
   }
 
   def clone(def pipeline, def args, String url) {
-    if (args['GITHUB_DISABLE_CERT_VERIFY']) {
+    if (args['GITHUB_DISABLE_SSL_VERIFY']) {
       disableSslVerify(pipeline)
     }
     def hostName = pipeline.sh(returnStdout: true, script: "uname -n").trim()
