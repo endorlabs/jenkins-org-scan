@@ -33,6 +33,12 @@ pipeline {
     stage('Sync Org') {
       steps {
         script {
+          if (args['PROJECT_LIST']) {
+            echo "Skipping sync-org"
+            projects = args['PROJECT_LIST'].split('\n')
+            def projectCount = projects.size()
+            echo "Project Count: ${projectCount}"
+          } 
           syncOrg.execute(this, args)
           def projectCount = syncOrg.getProjectCount(this, args)
           echo "Project Count: ${projectCount}"
@@ -42,8 +48,12 @@ pipeline {
     stage("Get Project List") {
       steps {
         script {
-          syncOrg.getProjectList(projects, this, args)
-          echo "List of Projects:\n" + projects.join("\n")
+          if (args['PROJECT_LIST']) {
+            echo "List of Projects:\n" + args['PROJECT_LIST']
+          } else {
+            syncOrg.getProjectList(projects, this, args)
+            echo "List of Projects:\n" + projects.join("\n")
+          }
         }
       }
     }
@@ -67,22 +77,24 @@ pipeline {
 }
 
 def generate_scan_stages(def targets, def project, def args) {
-  targets[project] = {
-    def dockerScan = new dockerScan()
-    def checkout = new checkout()
-    String projectName = projectName(project)
-    String stageName = "Scan " + projectName
-    node(args['AGENT_LABEL']) {
-      stage(stageName) {
-        try {
-          checkout.setCredentialHelper(this)
-          checkout.clone(this, args, project)
-          def branch = checkout.getDefaultBranch(this, project)
-          checkout.execute(this, branch)
-          dockerScan.execute(this, args, project, branch)
-        } catch (err) {
-          echo err.toString()
-          unstable("endorctl Scan failed for ${project}")
+  if (project) {
+    targets[project] = {
+      def dockerScan = new dockerScan()
+      def checkout = new checkout()
+      String projectName = projectName(project)
+      String stageName = "Scan " + projectName
+      node(args['AGENT_LABEL']) {
+        stage(stageName) {
+          try {
+            checkout.setCredentialHelper(this)
+            checkout.clone(this, args, project)
+            def branch = checkout.getDefaultBranch(this, project)
+            checkout.execute(this, branch)
+            dockerScan.execute(this, args, project, branch)
+          } catch (err) {
+            echo err.toString()
+            unstable("endorctl Scan failed for ${project}")
+          }
         }
       }
     }
@@ -184,5 +196,10 @@ def getParameters(def args) {
     args['GITHUB_DISABLE_SSL_VERIFY'] = params.GITHUB_DISABLE_SSL_VERIFY
   } else if (env.GITHUB_DISABLE_SSL_VERIFY) {
     args['GITHUB_DISABLE_SSL_VERIFY'] = env.GITHUB_DISABLE_SSL_VERIFY
+  }
+  if (params.PROJECT_LIST) {
+    args['PROJECT_LIST'] = params.PROJECT_LIST
+  } else if (env.PROJECT_LIST) {
+    args['PROJECT_LIST'] = env.PROJECT_LIST
   }
 }
