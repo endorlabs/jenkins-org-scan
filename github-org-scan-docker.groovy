@@ -34,8 +34,13 @@ pipeline {
       steps {
         script {
           if (args['PROJECT_LIST']) {
-            echo "Skipping sync-org"
-            projects = args['PROJECT_LIST'].split('\n')
+            echo "Skipping 'sync-org' as Project List is provided"
+            def projectList = args['PROJECT_LIST'].strip().split('\n')
+            for (String project: projectList) {
+              if (project) {
+                projects.add(project.strip())
+              }
+            }
             def projectCount = projects.size()
             echo "Project Count: ${projectCount}"
           } else {
@@ -49,12 +54,10 @@ pipeline {
     stage("Get Project List") {
       steps {
         script {
-          if (args['PROJECT_LIST']) {
-            echo "List of Projects:\n" + args['PROJECT_LIST']
-          } else {
+          if (!args['PROJECT_LIST']) {
             syncOrg.getProjectList(projects, this, args)
-            echo "List of Projects:\n" + projects.join("\n")
           }
+          echo "List of Projects:\n" + projects.join("\n")
         }
       }
     }
