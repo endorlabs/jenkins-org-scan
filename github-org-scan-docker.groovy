@@ -38,10 +38,11 @@ pipeline {
             projects = args['PROJECT_LIST'].split('\n')
             def projectCount = projects.size()
             echo "Project Count: ${projectCount}"
-          } 
-          syncOrg.execute(this, args)
-          def projectCount = syncOrg.getProjectCount(this, args)
-          echo "Project Count: ${projectCount}"
+          } else {
+            syncOrg.execute(this, args)
+            def projectCount = syncOrg.getProjectCount(this, args)
+            echo "Project Count: ${projectCount}"
+          }
         }
       }
     }
