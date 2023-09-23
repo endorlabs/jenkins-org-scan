@@ -6,7 +6,10 @@ class checkout implements Serializable {
     return https(pipeline, url)
   }
 
-  def clone(def pipeline, String url) {
+  def clone(def pipeline, def args, String url) {
+    if (args['GITHUB_DISABLE_CERT_VERIFY']) {
+      disableSslVerify(pipeline)
+    }
     def hostName = pipeline.sh(returnStdout: true, script: "uname -n").trim()
     def path = pipeline.sh(returnStdout: true, script: "pwd").trim()
     def gitClone = "GITHUB_TOKEN=" + pipeline.env.GITHUB_TOKEN
@@ -37,6 +40,12 @@ class checkout implements Serializable {
     cmdGitCredentialHelper += ' echo "password=${GITHUB_TOKEN}";'
     cmdGitCredentialHelper += " }; f'"
     pipeline.sh(cmdGitCredentialHelper)
+    return
+  }
+
+  def disableSslVerify(def pipeline) {
+    def cmd = "git config --global http.sslVerify false"
+    pipeline.sh(cmd)
     return
   }
 }

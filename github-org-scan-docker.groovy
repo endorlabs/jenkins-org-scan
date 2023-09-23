@@ -76,7 +76,7 @@ def generate_scan_stages(def targets, def project, def args) {
       stage(stageName) {
         try {
           checkout.setCredentialHelper(this)
-          checkout.clone(this, project)
+          checkout.clone(this, args, project)
           def branch = checkout.getDefaultBranch(this, project)
           checkout.execute(this, branch)
           dockerScan.execute(this, args, project, branch)
@@ -180,9 +180,9 @@ def getParameters(def args) {
   } else if (env.GITHUB_CA_CERT) {
     args['GITHUB_CA_CERT'] = env.GITHUB_CA_CERT
   }
-  if (params.GITHUB_CERT_VERIFY) {
-    args['GITHUB_CERT_VERIFY'] = params.GITHUB_CERT_VERIFY
-  } else if (env.GITHUB_CERT_VERIFY) {
-    args['GITHUB_CERT_VERIFY'] = env.GITHUB_CERT_VERIFY
+  if (params.GITHUB_DISABLE_CERT_VERIFY) {
+    args['GITHUB_DISABLE_CERT_VERIFY'] = params.GITHUB_DISABLE_CERT_VERIFY
+  } else if (env.GITHUB_DISABLE_CERT_VERIFY) {
+    args['GITHUB_DISABLE_CERT_VERIFY'] = env.GITHUB_DISABLE_CERT_VERIFY
   }
 }
