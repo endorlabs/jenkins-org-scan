@@ -56,13 +56,9 @@ class syncOrg implements Serializable {
     def jsonSlurper = new JsonSlurper()
     def data = jsonSlurper.parseText(jsonTxt)
     def objects = data.list.objects
-    for (def item : objects) {
-      for (def entry : item) {
-        String key = entry.getKey();
-        def value = entry.getValue();
-        if ( key == "spec" ) {
-            projects.add(value.git.http_clone_url)
-        }
+    objects.each { entry ->
+      if (entry.spec.git && entry.spec.git.http_clone_url) {
+        projects.add(entry.spec.git.http_clone_url)
       }
     }
   }
