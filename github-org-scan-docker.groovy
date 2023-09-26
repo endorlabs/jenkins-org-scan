@@ -90,7 +90,7 @@ def generate_scan_stages(def targets, def project, def args) {
       node(args['AGENT_LABEL']) {
         stage(stageName) {
           try {
-            String workspace = checkout.workspace(this, project)
+            String workspace = checkout.getWorkSpace(this, project)
             checkout.setCredentialHelper(this)
             checkout.clone(this, args, project, workspace)
             def branch = checkout.getDefaultBranch(this, project, workspace)

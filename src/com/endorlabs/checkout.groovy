@@ -2,7 +2,6 @@ package com.endorlabs
 import groovy.json.JsonSlurper
 
 class checkout implements Serializable {
-  private Static String workspace
   def call(def pipeline, String url) {
     return https(pipeline, url)
   }
@@ -51,11 +50,11 @@ class checkout implements Serializable {
     return
   }
 
-  def workspace(def pipeline, String project) {
+  def getWorkSpace(def pipeline, String project) {
     def matcher = project =~ /^https:\/\/([a-zA-Z\-\.]+)\/(?<org>[a-zA-Z\-_]+)\/(?<repo>[a-zA-Z\-_]+)\.git$/
     if (matcher.matches()) {
-      this.workspace = pipeline.env.WORKSPACE + "/${matcher.group('org')}_${matcher.group('repo')}"
-      return this.workspace
+      workspace = pipeline.env.WORKSPACE + "/${matcher.group('org')}_${matcher.group('repo')}"
+      return workspace
     } else {
       return pipeline.env.WORKSPACE
     }
