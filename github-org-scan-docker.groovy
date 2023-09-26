@@ -90,11 +90,12 @@ def generate_scan_stages(def targets, def project, def args) {
       node(args['AGENT_LABEL']) {
         stage(stageName) {
           try {
+            String workspace = checkout.workspace(this, project)
             checkout.setCredentialHelper(this)
-            checkout.clone(this, args, project)
-            def branch = checkout.getDefaultBranch(this, project)
-            checkout.execute(this, branch)
-            dockerScan.execute(this, args, project, branch)
+            checkout.clone(this, args, project, workspace)
+            def branch = checkout.getDefaultBranch(this, project, workspace)
+            checkout.execute(this, branch, workspace)
+            dockerScan.execute(this, args, project, branch, workspace)
           } catch (err) {
             echo err.toString()
             unstable("endorctl Scan failed for ${project}")
@@ -205,5 +206,10 @@ def getParameters(def args) {
     args['PROJECT_LIST'] = params.PROJECT_LIST
   } else if (env.PROJECT_LIST) {
     args['PROJECT_LIST'] = env.PROJECT_LIST
+  }
+  if (params.ENABLE_SCAN) {
+    args['ENABLE_SCAN'] = params.ENABLE_SCAN
+  } else if (env.ENABLE_SCAN) {
+    args['ENABLE_SCAN'] = env.ENABLE_SCAN
   }
 }
