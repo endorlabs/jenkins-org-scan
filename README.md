@@ -27,14 +27,23 @@ The pipeline scripts assumes that 3 secrets are available and stored with the fo
 ### Configuration for Github Cloud
 #### Required Parameters
 
-- `AGENT_LABEL` --> This is a *String Parameter*. It denotes the Label to be used to identify the Jenkins Agents. The Jenkins Job would run on the agent(s) with the given label.
-- `GITHUB_ORG` --> The Github Organisation Name of the Customer.
-- `ENDOR_LABS_NAMESPACE` --> The Tenant **namespace** of the customer.
+- `AGENT_LABEL` --> (*String Parameter*) It denotes the Label to be used to identify the Jenkins Agents. The Jenkins Job would run on the agent(s) with the given label.
+- `GITHUB_ORG` --> (*String Parameter*) The Github Organisation Name of the Customer.
+- `ENDOR_LABS_NAMESPACE` --> (*String Parameter*) The Tenant **namespace** of the customer.
 
 #### Optional Parameters
-- `ENDOR_LABS_API` --> This is only required if the Tenant **namespace** is configured on our Staging Environment.
+
+- `ENDORCTL_VERSION` --> (*String Parameter*) If not specified, it would default to **latest** version. Use this only if you want to use a specific version of `endorctl` for the scan.
+- `ENDOR_LABS_API` --> (*String Parameter*) This is only required if the Tenant **namespace** is configured on our Staging Environment.
+- `ENABLE_SCAN` --> (*String Parameter*) Set to 'git' to scan commits and/or 'github' to fetch info from the GitHub API. (default [git,analytics])
+- `SCAN_SUMMARY_OUTPUT_TYPE` --> (*String Parameter*) Set to the desired output format. Supported formats: 'json' | 'yaml' | 'table' | 'summary'. (default "table")
+- `LOG_LEVEL` --> (*String Parameter*) Sets the log level of the application. (default "info")
+- `LOG_VERBOSE` --> (*String Parameter*) Makes the log verbose.
+- `LANGUAGES` --> (*String Parameter*) Set programming languages to scan. Supported languages: c#, go, java, javascript, php, python, ruby, rust, scala, typescript (default [c#,go,java,javascript,php,python,ruby,rust,scala,typescript])
 - `ADDITIONAL_ARGS` --> (*String Parameter*) Use this field to pass any additional parameter to `endorctl` scan
-- `NO_OF_THREADS` --> This denotes the number of Jenkins Agent that can be used in parallel for the `endorctl` scan. If a customer has 10 Jenkins Agent configured with the given `AGENT_LABEL`, this value should be 9 (we use 1 agent for the main job). This values defaults to **5** if not specified.
+- `NO_OF_THREADS` --> (*String Parameter*) This denotes the number of Jenkins Agent that can be used in parallel for the `endorctl` scan. If a customer has 10 Jenkins Agent configured with the given `AGENT_LABEL`, this value should be 9 (we use 1 agent for the main job). This values defaults to **5** if not specified.
+- `PROJECT_LIST` --> (*Multi-line String Parameter*) This should be used to provide a list of projects to scan. Even though, all the projects/repositories in the Github Org will be synched to the tenant namespace, scan will run on the provided projects only.
+- `EXCLUDE_PROJECTS` --> (*Multi-line String Parameter*) This allows you to provide a list of projects/repositories to exclude from scan. This may be used to exclude repositories which are empty, test repos or takes several hours to scan.
 
 ### Configuration for Github Enterprise Server
 #### Required Parameters
@@ -47,6 +56,16 @@ The pipeline scripts assumes that 3 secrets are available and stored with the fo
 #### Optional Parameters
 
 - `ENDOR_LABS_API` --> (*String Parameter*) This is only required if the Tenant **namespace** is configured on our Staging Environment.
+- `ENDORCTL_VERSION` --> (*String Parameter*) If not specified, it would default to **latest** version. Use this only if you want to use a specific version of `endorctl` for the scan.
+- `ENDOR_LABS_API` --> (*String Parameter*) This is only required if the Tenant **namespace** is configured on our Staging Environment.
+- `ENABLE_SCAN` --> (*String Parameter*) Set to 'git' to scan commits and/or 'github' to fetch info from the GitHub API. (default [git,analytics])
+- `SCAN_SUMMARY_OUTPUT_TYPE` --> (*String Parameter*) Set to the desired output format. Supported formats: 'json' | 'yaml' | 'table' | 'summary'. (default "table")
+- `LOG_LEVEL` --> (*String Parameter*) Sets the log level of the application. (default "info")
+- `LOG_VERBOSE` --> (*String Parameter*) Makes the log verbose.
+- `LANGUAGES` --> (*String Parameter*) Set programming languages to scan. Supported languages: c#, go, java, javascript, php, python, ruby, rust, scala, typescript (default [c#,go,java,javascript,php,python,ruby,rust,scala,typescript])
+- `ADDITIONAL_ARGS` --> (*String Parameter*) Use this field to pass any additional parameter to `endorctl` scan
+- `NO_OF_THREADS` --> (*String Parameter*) This denotes the number of Jenkins Agent that can be used in parallel for the `endorctl` scan. If a customer has 10 Jenkins Agent configured with the given `AGENT_LABEL`, this value should be 9 (we use 1 agent for the main job). This values defaults to **5** if not specified.
+- `EXCLUDE_PROJECTS` --> (*Multi-line String Parameter*) This allows you to provide a list of projects/repositories to exclude from scan. This may be used to exclude repositories which are empty, test repos or takes several hours to scan.
 - `GITHUB_DISABLE_SSL_VERIFY` --> (*Boolean Parameter*) This should be used when you want to skip SSL Verification while cloning the repository.
 - `GITHUB_CA_CERT` --> (*Multi-line String Parameter*) This should be used to provide the content of CA Certificate (PEM format) of the SSL Certificate used on Github Enterprise Server.
 - `PROJECT_LIST` --> (*Multi-line String Parameter*) This should be used to provide a list of projects to scan. 
@@ -57,9 +76,6 @@ https://github-test.endorlabs.in/pse/vulnerable-golang.git
 https://github-test.endorlabs.in/pse/java-javascript-vulnerable-repo.git
 https://github-test.endorlabs.in/pse/multi-lang-repo.git
 ```
-
-- `ADDITIONAL_ARGS` --> (*String Parameter*) Use this field to pass any additional parameter to `endorctl` scan
-- `NO_OF_THREADS` --> (*String Parameter*) This denotes the number of Jenkins Agent that can be used in parallel for the `endorctl` scan. If a customer has 10 Jenkins Agent configured with the given `AGENT_LABEL`, this value should be 9 (we use 1 agent for the main job). This values defaults to **5** if not specified.
 
 
 ### Steps to configure the Job
