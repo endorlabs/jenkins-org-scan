@@ -1,4 +1,4 @@
-@Library("endor-shared-lib") _
+@Library("endor-shared-lib@separate_workspace") _
 import com.endorlabs.dockerScan
 import com.endorlabs.syncOrg
 import com.endorlabs.checkout
@@ -19,8 +19,8 @@ pipeline {
   }
   environment {
     GITHUB_TOKEN = credentials('GITHUB_TOKEN')
-    ENDOR_LABS_API_KEY = credentials('ENDOR_LABS_API_KEY')
-    ENDOR_LABS_API_SECRET = credentials('ENDOR_LABS_API_SECRET')
+    ENDOR_LABS_API_KEY = credentials('ENDOR_LABS_API_KEY_jenkins')
+    ENDOR_LABS_API_SECRET = credentials('ENDOR_LABS_API_SECRET_jenkins')
   }
   stages {
     stage('Docker Pull') {
