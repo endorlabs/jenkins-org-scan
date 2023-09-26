@@ -5,9 +5,9 @@ class dockerScan implements Serializable {
     return execute(pipeline)
   }
 
-  def execute(def pipeline, def args, String project, String branch) {
+  def execute(def pipeline, def args, String project, String branch, String workspace) {
     def dockerRun = "docker run --rm"
-    dockerRun += " -v '" + pipeline.env.WORKSPACE + "':/root/endorlabs"
+    dockerRun += " -v '" + workspace + "':/root/endorlabs"
     dockerRun += " us-central1-docker.pkg.dev/endor-ci/public/endorctl:" + args['ENDORCTL_VERSION']
     if (args['ENDOR_LABS_API']) {
       dockerRun += " --api " + args['ENDOR_LABS_API']
@@ -20,7 +20,9 @@ class dockerScan implements Serializable {
     }
     dockerRun += " --log-level " + args['LOG_LEVEL'] + " scan --path=/root/endorlabs "
     dockerRun += " --github-token " + pipeline.env.GITHUB_TOKEN
-    dockerRun += " --enable github,git,analytics"
+    if (args['ENABLE_SCAN']) {
+      dockerRun += " --enable " + args['ENABLE_SCAN']
+    }
     dockerRun += " --repository-http-clone-url " + project
     if (branch) {
       dockerRun += " --as-default-branch --detached-ref-name=" + branch

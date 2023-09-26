@@ -52,13 +52,26 @@ class syncOrg implements Serializable {
     dockerRun += " --api-key " + pipeline.env.ENDOR_LABS_API_KEY
     dockerRun += " --api-secret " + pipeline.env.ENDOR_LABS_API_SECRET
     dockerRun += " api list -r Project"
+    def exclude_projects = []
+    if (args['EXCLUDE_PROJECTS']) {
+      def projectList = args['EXCLUDE_PROJECTS'].strip().split('\n')
+      for (String project: projectList) {
+        if (project) {
+          exclude_projects.add(project.strip())
+        }
+      }
+    }
     def jsonTxt = pipeline.sh(returnStdout: true, script: dockerRun).trim()
     def jsonSlurper = new JsonSlurper()
     def data = jsonSlurper.parseText(jsonTxt)
     def objects = data.list.objects
     objects.each { entry ->
       if (entry.spec.git && entry.spec.git.http_clone_url) {
-        projects.add(entry.spec.git.http_clone_url)
+        if (exclude_projects.contains(entry.spec.git.http_clone_url)) {
+          pipeline.echo("Excluding ${entry.spec.git.http_clone_url} from the list of projects to scan")
+        } else {
+          projects.add(entry.spec.git.http_clone_url)
+        }
       }
     }
   }
