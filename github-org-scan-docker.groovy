@@ -212,4 +212,9 @@ def getParameters(def args) {
   } else if (env.ENABLE_SCAN) {
     args['ENABLE_SCAN'] = env.ENABLE_SCAN
   }
+  if (params.EXCLUDE_PROJECTS) {
+    args['EXCLUDE_PROJECTS'] = params.EXCLUDE_PROJECTS
+  } else if (env.EXCLUDE_PROJECTS) {
+    args['EXCLUDE_PROJECTS'] = env.EXCLUDE_PROJECTS
+  }
 }
