@@ -27,13 +27,13 @@ The pipeline scripts assumes that 3 secrets are available and stored with the fo
 ### Configuration for Github Cloud
 #### Required Parameters
 
-- `AGENT_LABEL` --> (*String Parameter*) It denotes the Label to be used to identify the Jenkins Agents. The Jenkins Job would run on the agent(s) with the given label.
-- `GITHUB_ORG` --> (*String Parameter*) The Github Organisation Name of the Customer.
-- `ENDOR_LABS_NAMESPACE` --> (*String Parameter*) The Tenant **namespace** of the customer.
+- `AGENT_LABEL` --> (*String Parameter*) It denotes the denotes the label for the Jenkins Agent where the job will be executed.
+- `GITHUB_ORG` --> (*String Parameter*) Specify your Github organization name.
+- `ENDOR_LABS_NAMESPACE` --> (*String Parameter*) Specify the Endor Labs platform namespace where the results of the scan will be uploaded.
 
 #### Optional Parameters
 
-- `ENDORCTL_VERSION` --> (*String Parameter*) If not specified, it would default to **latest** version. Use this only if you want to use a specific version of `endorctl` for the scan.
+- `ENDORCTL_VERSION` --> (*String Parameter*) This is an optional parameter. This parameter can be used to specify the exact version of the endorctl docker container to be used for the scans. If not specified, latest version will be used.
 - `ENDOR_LABS_API` --> (*String Parameter*) This is only required if the Tenant **namespace** is configured on our Staging Environment.
 - `ENABLE_SCAN` --> (*String Parameter*) Set to 'git' to scan commits and/or 'github' to fetch info from the GitHub API. (default [git,analytics])
 - `SCAN_SUMMARY_OUTPUT_TYPE` --> (*String Parameter*) Set to the desired output format. Supported formats: 'json' | 'yaml' | 'table' | 'summary'. (default "table")
@@ -49,14 +49,14 @@ The pipeline scripts assumes that 3 secrets are available and stored with the fo
 #### Required Parameters
 
 - `AGENT_LABEL` --> (*String Parameter*) It denotes the Label to be used to identify the Jenkins Agents. The Jenkins Job would run on the agent(s) with the given label.
-- `GITHUB_ORG` --> (*String Parameter*) It denotes the Github Organisation Name of the Customer.
-- `ENDOR_LABS_NAMESPACE` --> (*String Parameter*) The Tenant **namespace** of the customer.
+- `GITHUB_ORG` --> (*String Parameter*) Specify your Github organization name.
+- `ENDOR_LABS_NAMESPACE` --> (*String Parameter*) Specify the Endor Labs platform namespace where the results of the scan will be uploaded.
 - `GITHUB_API_URL` --> (*String Parameter*) The API URL of the Github Enterprise Server. This is normally in the for `<FQDN of Github Enterprise Server>/api/v3` e.g., <https://ghe.endorlabs.in/api/v3>
 
 #### Optional Parameters
 
 - `ENDOR_LABS_API` --> (*String Parameter*) This is only required if the Tenant **namespace** is configured on our Staging Environment.
-- `ENDORCTL_VERSION` --> (*String Parameter*) If not specified, it would default to **latest** version. Use this only if you want to use a specific version of `endorctl` for the scan.
+- `ENDORCTL_VERSION` --> (*String Parameter*) This is an optional parameter. This parameter can be used to specify the exact version of the endorctl docker container to be used for the scans. If not specified, latest version will be used.
 - `ENDOR_LABS_API` --> (*String Parameter*) This is only required if the Tenant **namespace** is configured on our Staging Environment.
 - `ENABLE_SCAN` --> (*String Parameter*) Set to 'git' to scan commits and/or 'github' to fetch info from the GitHub API. (default [git,analytics])
 - `SCAN_SUMMARY_OUTPUT_TYPE` --> (*String Parameter*) Set to the desired output format. Supported formats: 'json' | 'yaml' | 'table' | 'summary'. (default "table")
