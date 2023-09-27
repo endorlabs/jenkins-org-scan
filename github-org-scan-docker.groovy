@@ -176,7 +176,7 @@ def projectName(String project) {
  *     'GITHUB_CA_CERT': 'GitHub Enterprise Server CA Certificate',
  *     'GITHUB_DISABLE_SSL_VERIFY': 'Whether to disable SSL verification (true/false)',
  *     'PROJECT_LIST': 'List of projects/repositories to scan',
- *     'ENABLE_SCAN': 'Scan source (git/github)',
+ *     'SCAN_TYPE': 'Scan source (git/github)',
  *     'EXCLUDE_PROJECTS': 'List of projects to exclude from scan',
  *   }
  * 
@@ -281,10 +281,10 @@ def getParameters(def args) {
   } else if (env.PROJECT_LIST) {
     args['PROJECT_LIST'] = env.PROJECT_LIST
   }
-  if (params.ENABLE_SCAN) {
-    args['ENABLE_SCAN'] = params.ENABLE_SCAN
-  } else if (env.ENABLE_SCAN) {
-    args['ENABLE_SCAN'] = env.ENABLE_SCAN
+  if (params.SCAN_TYPE) {
+    args['SCAN_TYPE'] = params.SCAN_TYPE
+  } else if (env.SCAN_TYPE) {
+    args['SCAN_TYPE'] = env.SCAN_TYPE
   }
   if (params.EXCLUDE_PROJECTS) {
     args['EXCLUDE_PROJECTS'] = params.EXCLUDE_PROJECTS

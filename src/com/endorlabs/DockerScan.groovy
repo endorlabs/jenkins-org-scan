@@ -35,8 +35,8 @@ class DockerScan implements Serializable {
     }
     dockerRun += " --log-level " + args['LOG_LEVEL'] + " scan --path=/root/endorlabs "
     dockerRun += " --github-token " + pipeline.env.GITHUB_TOKEN
-    if (args['ENABLE_SCAN']) {
-      dockerRun += " --enable " + args['ENABLE_SCAN']
+    if (args['SCAN_TYPE']) {
+      dockerRun += " --enable " + args['SCAN_TYPE']
     }
     dockerRun += " --repository-http-clone-url " + project
     if (branch) {
