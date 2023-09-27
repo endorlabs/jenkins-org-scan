@@ -18,13 +18,15 @@ The Jenkins Pipeline script is available in the [github-org-scan-docker.groovy](
 
 ### Configuration Parameters
 
-#### Secrets
+#### Configuration Parameters (Secrets)
 
 Before using the pipeline, ensure that the following secrets are correctly configured in your Jenkins environment:
 
 - `GITHUB_TOKEN`: GitHub access token.
 - `ENDOR_LABS_API_KEY`: Endor Labs API Key.
 - `ENDOR_LABS_API_SECRET`: Endor Labs API Secret.
+
+These secrets are common and are for mandatory for both Github Cloud and Github Enterprise environments.
 
 #### Configuration Parameters (GitHub Cloud)
 
@@ -37,8 +39,7 @@ Before using the pipeline, ensure that the following secrets are correctly confi
 **Optional Parameters:**
 
 - `ENDORCTL_VERSION` (String Parameter): Specify the version of the `endorctl` Docker container. Defaults to the latest version.
-- `ENDOR_LABS_API` (String Parameter): Required if the Tenant namespace is configured on the Staging Environment.
-- `ENABLE_SCAN` (String Parameter): Set to 'git' to scan commits and/or 'github' to fetch info from the GitHub API. Default is ['git', 'analytics'].
+- `SCAN_TYPE` (String Parameter): Set to 'git' to scan commits and/or 'github' to fetch info from the GitHub API. Default is ['git', 'analytics'].
 - `SCAN_SUMMARY_OUTPUT_TYPE` (String Parameter): Set the desired output format. Supported formats: 'json', 'yaml', 'table', 'summary'. Default is "table".
 - `LOG_LEVEL` (String Parameter): Sets the log level of the application. Default is "info".
 - `LOG_VERBOSE` (String Parameter): Makes the log verbose.
@@ -61,7 +62,7 @@ Before using the pipeline, ensure that the following secrets are correctly confi
 
 - `ENDORCTL_VERSION` (String Parameter): Specify the version of the `endorctl` Docker container. Defaults to the latest version.
 - `ENDOR_LABS_API` (String Parameter): Required if the Tenant namespace is configured on the Staging Environment.
-- `ENABLE_SCAN` (String Parameter): Set to 'git' to scan commits and/or 'github' to fetch info from the GitHub API. Default is ['git', 'analytics'].
+- `SCAN_TYPE` (String Parameter): Set to 'git' to scan commits and/or 'github' to fetch info from the GitHub API. Default is ['git', 'analytics'].
 - `SCAN_SUMMARY_OUTPUT_TYPE` (String Parameter): Set the desired output format. Supported formats: 'json', 'yaml', 'table', 'summary'. Default is "table".
 - `LOG_LEVEL` (String Parameter): Sets the log level of the application. Default is "info".
 - `LOG_VERBOSE` (String Parameter): Makes the log verbose.
