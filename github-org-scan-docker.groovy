@@ -1,9 +1,9 @@
 @Library("endor-shared-lib") _
-import com.endorlabs.dockerScan
-import com.endorlabs.syncOrg
-import com.endorlabs.checkout
-def dockerScan = new dockerScan()
-def syncOrg = new syncOrg()
+import com.endorlabs.DockerScan
+import com.endorlabs.SyncOrg
+import com.endorlabs.Checkout
+def DockerScan = new DockerScan()
+def SyncOrg = new SyncOrg()
 def args = [:]
 getParameters(args)
 def projects = []
@@ -44,8 +44,8 @@ pipeline {
             def projectCount = projects.size()
             echo "Project Count: ${projectCount}"
           } else {
-            syncOrg.execute(this, args)
-            def projectCount = syncOrg.getProjectCount(this, args)
+            SyncOrg.execute(this, args)
+            def projectCount = SyncOrg.getProjectCount(this, args)
             echo "Project Count: ${projectCount}"
           }
         }
@@ -55,7 +55,7 @@ pipeline {
       steps {
         script {
           if (!args['PROJECT_LIST']) {
-            syncOrg.getProjectList(projects, this, args)
+            SyncOrg.getProjectList(projects, this, args)
           }
           echo "List of Projects:\n" + projects.join("\n")
         }
@@ -80,22 +80,39 @@ pipeline {
   }
 }
 
+/**
+ * Generate Scan Stages
+ * 
+ * This function generates Jenkins pipeline stages for running `endorctl` scans on a specified set of targets.
+ * Each stage represents a scan job for a specific project within a Jenkins pipeline.
+ * 
+ * @param targets (Map<String, Map>): A map where the keys are project names and the values are maps
+ *   containing the configuration for each project.
+ * 
+ * @param project (String): The URL of the target repository or project to scan.
+ * 
+ * @param args (Map<String, String>): Arguments to pass to the Jenkins pipeline stages.
+ * 
+ * @return (Map<String, Map>): A map representing the generated Jenkins pipeline stages.
+ *   Each stage corresponds to a project and includes the steps required to scan the project.
+ */
+
 def generate_scan_stages(def targets, def project, def args) {
   if (project) {
     targets[project] = {
-      def dockerScan = new dockerScan()
-      def checkout = new checkout()
+      def DockerScan = new DockerScan()
+      def Checkout = new Checkout()
       String projectName = projectName(project)
       String stageName = "Scan " + projectName
       node(args['AGENT_LABEL']) {
         stage(stageName) {
           try {
-            String workspace = checkout.getWorkSpace(this, project)
-            checkout.setCredentialHelper(this)
-            checkout.clone(this, args, project, workspace)
-            def branch = checkout.getDefaultBranch(this, project, workspace)
-            checkout.execute(this, branch, workspace)
-            dockerScan.execute(this, args, project, branch, workspace)
+            String workspace = Checkout.getWorkSpace(this, project)
+            Checkout.setCredentialHelper(this)
+            Checkout.clone(this, args, project, workspace)
+            def branch = Checkout.getDefaultBranch(this, project, workspace)
+            Checkout.execute(this, branch, workspace)
+            DockerScan.execute(this, args, project, branch, workspace)
           } catch (err) {
             echo err.toString()
             unstable("endorctl Scan failed for ${project}")
@@ -106,6 +123,24 @@ def generate_scan_stages(def targets, def project, def args) {
   }
 }
 
+/**
+ * Get Project Name from URL
+ * 
+ * This function extracts the project name from a GitHub repository URL.
+ * It is designed to work with GitHub repository URLs in the format:
+ * `https://github.com/organization/repository.git`.
+ * 
+ * @param project (String): The URL of the GitHub repository.
+ * 
+ * @return (String): The extracted project name, which is the combination of
+ *   the organization or user name and the repository name (e.g., "organization/repository").
+ *   If the input URL is not in the expected format, the original input project string is returned.
+ * 
+ * Example Usage:
+ * String projectURL = 'https://github.com/example/my-repo.git'
+ * String projectName = projectName(projectURL)
+ * 
+ */
 def projectName(String project) {
   def matcher = project =~ /^https:\/\/([a-zA-Z\-\.]+)\/(?<proj>[a-zA-Z\-_]+\/[a-zA-Z\-_]+)\.git$/
   if (matcher.matches()) {
@@ -115,6 +150,45 @@ def projectName(String project) {
   }
 }
 
+/**
+ * Get Pipeline Parameters
+ * 
+ * This function retrieves pipeline parameters from both the Jenkins pipeline's parameters
+ * and environment variables. It populates the `args` map with the specified parameters,
+ * ensuring that the required parameters have values. If a parameter is not provided,
+ * it falls back to environment variables or defaults.
+ * 
+ * @param args (Map): A map representing the configuration parameters for the pipeline.
+ *   The map is structured as follows:
+ *   {
+ *     'AGENT_LABEL': 'Label of Jenkins Agent',
+ *     'GITHUB_ORG': 'GitHub organization name',
+ *     'ENDORCTL_VERSION': 'Version of endorctl Docker container',
+ *     'ENDOR_LABS_NAMESPACE': 'Endor Labs platform namespace',
+ *     'SCAN_SUMMARY_OUTPUT_TYPE': 'Summary output format',
+ *     'LOG_LEVEL': 'Log level for the application',
+ *     'LOG_VERBOSE': 'Whether to enable verbose logging (true/false)',
+ *     'LANGUAGES': 'Programming languages to scan',
+ *     'ADDITIONAL_ARGS': 'Additional arguments for scan',
+ *     'NO_OF_THREADS': 'Number of Jenkins Agents to use in parallel',
+ *     'ENDOR_LABS_API': 'Endor Labs API Key',
+ *     'GITHUB_API_URL': 'GitHub Enterprise Server API URL',
+ *     'GITHUB_CA_CERT': 'GitHub Enterprise Server CA Certificate',
+ *     'GITHUB_DISABLE_SSL_VERIFY': 'Whether to disable SSL verification (true/false)',
+ *     'PROJECT_LIST': 'List of projects/repositories to scan',
+ *     'ENABLE_SCAN': 'Scan source (git/github)',
+ *     'EXCLUDE_PROJECTS': 'List of projects to exclude from scan',
+ *   }
+ * 
+ * @throws error: Throws an error and terminates the pipeline if mandatory parameters are missing.
+ * 
+ * Example Usage:
+ * def args = [:]
+ * getParameters(args)
+ * 
+ * The 'args' map will be populated with the retrieved or default parameter values.
+ * Missing mandatory parameters will result in an error and pipeline termination.
+ */
 def getParameters(def args) {
   if (params.AGENT_LABEL) {
     args['AGENT_LABEL'] = params.AGENT_LABEL

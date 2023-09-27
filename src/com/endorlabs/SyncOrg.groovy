@@ -1,11 +1,20 @@
 package com.endorlabs
 import groovy.json.JsonSlurper
 
-class syncOrg implements Serializable {
+class SyncOrg implements Serializable {
   def call(def pipeline) {
     return execute(pipeline)
   }
 
+  /**
+   * Execute Sync-Org Command
+   * 
+   * This method executes the `endorctl sync-org` command to synchronize GitHub projects
+   * to a specified namespace in the Endor Labs platform.
+   * 
+   * @param pipeline (def): The Jenkins pipeline context.
+   * @param args (def): A map containing pipeline configuration parameters.
+   */
   def execute(def pipeline, def args) {
     def dockerRun = "docker run --rm"
     dockerRun += " -e GITHUB_TOKEN=" + pipeline.env.GITHUB_TOKEN
@@ -24,6 +33,15 @@ class syncOrg implements Serializable {
     pipeline.sh(dockerRun)
   }
 
+  /**
+   * Get Project Count
+   * 
+   * This method retrieves the count of projects within a specified organization or namespace.
+   * 
+   * @param pipeline (def): The Jenkins pipeline context.
+   * @param args (def): A map containing pipeline configuration parameters.
+   * @return: The count of projects.
+   */
   def getProjectCount(def pipeline, def args) {
     def dockerRun = "docker run --rm"
     dockerRun += " -e GITHUB_TOKEN=" + pipeline.env.GITHUB_TOKEN
@@ -41,6 +59,16 @@ class syncOrg implements Serializable {
     return data.count_response.count
   }
 
+  /**
+   * Get Project List
+   * 
+   * This method retrieves the list of projects within a specified organization or namespace.
+   * Optionally, it can exclude specific projects from the list.
+   * 
+   * @param projects (def): A list to store the retrieved project URLs.
+   * @param pipeline (def): The Jenkins pipeline context.
+   * @param args (def): A map containing pipeline configuration parameters.
+   */
   def getProjectList(def projects, def pipeline, def args) {
     def dockerRun = "docker run --rm"
     dockerRun += " -e GITHUB_TOKEN=" + pipeline.env.GITHUB_TOKEN
