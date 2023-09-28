@@ -24,11 +24,10 @@ class Checkout implements Serializable {
       disableSslVerify(pipeline)
     }
     def hostName = pipeline.sh(returnStdout: true, script: "uname -n").trim()
-    def path = pipeline.sh(returnStdout: true, script: "pwd").trim()
-    def gitClone = "GITHUB_TOKEN=" + pipeline.env.GITHUB_TOKEN
-    gitClone += " git clone " + url + " " + workspace
+    def gitClone = 'GITHUB_TOKEN=' + pipeline.env.GITHUB_TOKEN
+    gitClone += ' git clone ' + url + ' "' + workspace + '"'
     pipeline.sh(gitClone)
-    pipeline.echo("Cloned ${url} in ${path}/${workspace} on ${hostName}")
+    pipeline.echo("Cloned ${url} in ${workspace} on ${hostName}")
     return
   }
 
@@ -44,7 +43,7 @@ class Checkout implements Serializable {
    * This function will check out the specified branch within the provided workspace.
    */
   def execute(def pipeline, def branch, String workspace) {
-    def checkoutBranch = "cd " + workspace + " && git checkout " + branch
+    def checkoutBranch = 'cd "' + workspace + '" && git checkout ' + branch
     pipeline.echo("Checked out branch '$branch'")
     pipeline.sh(checkoutBranch)
   }
@@ -60,9 +59,9 @@ class Checkout implements Serializable {
    * @return: The name of the default branch.
    */
   def getDefaultBranch(def pipeline, def url, String workspace) {
-    def cmdGetDefaultBranch = "cd " + workspace + " &&"
-    cmdGetDefaultBranch += " GITHUB_TOKEN=" + pipeline.env.GITHUB_TOKEN
-    cmdGetDefaultBranch += " git remote show " + url 
+    def cmdGetDefaultBranch = 'cd "' + workspace + '" &&'
+    cmdGetDefaultBranch += ' GITHUB_TOKEN=' + pipeline.env.GITHUB_TOKEN
+    cmdGetDefaultBranch += ' git remote show ' + url 
     cmdGetDefaultBranch += "  | grep 'HEAD branch' | cut -d' ' -f5"
     def defaultBranch = pipeline.sh(returnStdout: true, script: cmdGetDefaultBranch).trim()
     return defaultBranch
