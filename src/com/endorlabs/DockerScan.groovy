@@ -57,8 +57,7 @@ class DockerScan implements Serializable {
       dockerRun += " " + args['ADDITIONAL_ARGS']
     }
     def hostName = pipeline.sh(returnStdout: true, script: "uname -n").trim()
-    def path = pipeline.sh(returnStdout: true, script: "pwd").trim()
-    pipeline.echo("Running endorctl scan in $path on $hostName")
+    pipeline.echo("Running endorctl scan for path '$workspace' on host '$hostName'")
     pipeline.sh(dockerRun)
   }
 
