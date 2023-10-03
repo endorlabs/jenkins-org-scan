@@ -10,7 +10,7 @@ The Jenkins pipeline carries out the following actions:
 - Runs endorctl scans on each batch of projects simultaneously.
 
 ## Scan the repositories in your organization
-The Jenkins Pipeline script is available in the [github-org-scan-docker.groov](https://github.com/endorlabs/jenkins-org-scan/blob/main/github-org-scan-docker.groovy) file. To scan the repositories in your organization:
+The Jenkins Pipeline script is available in the [github-org-scan-docker.groovy](https://github.com/endorlabs/jenkins-org-scan/blob/main/github-org-scan-docker.groovy) file. To scan the repositories in your organization:
 
 1. [Generate Endor Labs API credentials](#generate-endor-labs-api-credentials)
 2. [Configure GitHub cloud or GitHub enterprise server credentials](#configure-github-credentials)
@@ -49,10 +49,10 @@ Configure the following GitHub cloud parameters in the Jenkins pipeline script.
 - `ENDORCTL_VERSION`: This is a *string parameter*. Specify the version of the `endorctl` Docker container. Defaults to the latest version.
 - `SCAN_TYPE`: This is a *string parameter*. Set this to **git** to scan commits or **github** to fetch info from the GitHub API. Defaults to ['git', 'analytics'].
 - `SCAN_SUMMARY_OUTPUT_TYPE`: This is a *string parameter*. Use this field to set the desired output format. Supported formats: **json**, **yaml'**, **table**, **summary**. Defaults to **table**.
-`LOG_LEVEL`: This is a *string parameter*. Use this field to set the log level of the application. Defaults to **info**.
-`LOG_VERBOSE`: This is a *string parameter*. Use this field to make the log verbose.
-`LANGUAGES`: This is a *string parameter*. Use this field to set programming languages to scan. Supported languages: **c#**, **go**, **java**, **javascript**, **php**, **python**, **ruby**, **rust**, **scala**, **typescript**. Defaults to all supported languages.
-`ADDITIONAL_ARGS`: This is a *string parameter*. Use this field to pass any additional parameters to the endorctl scan.
+- `LOG_LEVEL`: This is a *string parameter*. Use this field to set the log level of the application. Defaults to **info**.
+- `LOG_VERBOSE`: This is a *string parameter*. Use this field to make the log verbose.
+- `LANGUAGES`: This is a *string parameter*. Use this field to set programming languages to scan. Supported languages: **c#**, **go**, **java**, **javascript**, **php**, **python**, **ruby**, **rust**, **scala**, **typescript**. Defaults to all supported languages.
+- `ADDITIONAL_ARGS`: This is a *string parameter*. Use this field to pass any additional parameters to the endorctl scan.
 
 ### Configure GitHub enterprise server credentials
 Configure the following GitHub enterprise server parameters in the Jenkins pipeline script.
