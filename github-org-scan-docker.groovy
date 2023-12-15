@@ -54,11 +54,9 @@ pipeline {
             echo "Skipping 'sync-org' as Project List is provided"
             def projectList = args['PROJECT_LIST'].strip().split('\n')
             for (String project: projectList) {
-              if (project && isCommitNewerThanOneWeek(project)) {
+              if (project) {
                 projects.add(project.strip())
-              } else {
-                echo "Did not add project to the list (1 week check): ${project.strip()}"
-	      }
+              }
             }
             def projectCount = projects.size()
             echo "Project Count: ${projectCount}"
@@ -77,6 +75,9 @@ pipeline {
             SyncOrg.getProjectList(projects, this, args)
           }
           echo "List of Projects:\n" + projects.join("\n")
+          echo "Cleaning up projects older than a week"
+          projects.removeAll { item -> isCommitNewerThanOneWeek(item) }
+          echo "List of Projects after cleanup:\n" + projects.join("\n")
         }
       }
     }
