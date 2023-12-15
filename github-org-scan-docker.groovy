@@ -97,7 +97,7 @@ pipeline {
           }
           projects = cleanedUpProjects
 */
-          projects.removeAll { project -> isCommitNewerThanOneWeek(project) }
+          projects.removeAll { item -> isCommitNewerThanOneWeek(item) }
           echo "List of Projects after cleanup:\n" + projects.join("\n")
         }
       }
