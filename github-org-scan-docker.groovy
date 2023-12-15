@@ -75,12 +75,15 @@ pipeline {
             SyncOrg.getProjectList(projects, this, args)
           }
           echo "List of Projects:\n" + projects.join("\n")
-          echo "Cleaning up projects older than a week"
-          for (int i = projects.size() -1; i >= 0; i--) {
-            if (!isCommitNewerThanOneWeek(projects[i])) {
-               projects.remove(i)
+          echo "Cleaning up projects older than a week\n"
+          def cleanedUpProjects = []
+          for (String project: projects) {
+            if (project && isCommitNewerThanOneWeek(project)) {
+              echo "Project commit is newer than a week: ${project}\n"
+              cleanedUpProjects.add(project.strip())
             }
           }
+          projects = cleanedUpProjects
           echo "List of Projects after cleanup:\n" + projects.join("\n")
         }
       }
