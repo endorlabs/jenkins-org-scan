@@ -14,7 +14,7 @@ def extractRepoFromGitURL(projectUrl) {
   // Extract the path part of the URL
   def path = new URL(projectUrl).path
   // Remove leading and trailing slashes
-  path = path.replaceAll("^/|/$", "")
+  path = path = path.replaceAll('^/|/$', '').replaceAll('\\.git$', '')
   println "Extracted path: ${path}"
   return path
 }
