@@ -10,10 +10,21 @@ def args = [:]
 getParameters(args)
 def projects = []
 
+def extractRepoFromGitURL(projectUrl) {
+  // Extract the path part of the URL
+  def path = new URL(projectUrl).path
+  // Remove leading and trailing slashes
+  path = path.replaceAll("^/|/$", "")
+  println "Extracted path: ${path}"
+  return path
+}
+
 // Define a function to check if the latest commit is newer than one week
-def isCommitNewerThanOneWeek(repo) {
+def isCommitNewerThanOneWeek(projectUrl) {
     def dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
     def oneWeekAgo = new Date() - 7
+
+    def repo = extractRepoFromGitUrl(projectUrl)
 
     def apiUrl = new URL("https://api.github.com/repos/$repo/commits?per_page=1")
     def response = apiUrl.getText()
