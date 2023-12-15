@@ -87,17 +87,7 @@ pipeline {
           }
           echo "List of Projects:\n" + projects.join("\n")
           echo "Cleaning up projects older than a week\n"
-/**
-          def cleanedUpProjects = []
-          for (String project: projects) {
-            if (project && isCommitNewerThanOneWeek(project)) {
-              echo "Project commit is newer than a week: ${project}\n"
-              cleanedUpProjects.add(project.strip())
-            }
-          }
-          projects = cleanedUpProjects
-*/
-          projects.removeAll { item -> isCommitNewerThanOneWeek(item) }
+          projects.removeAll { item -> !isCommitNewerThanOneWeek(item) }
           echo "List of Projects after cleanup:\n" + projects.join("\n")
         }
       }
