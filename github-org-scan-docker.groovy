@@ -1,4 +1,6 @@
 @Library("endor-shared-lib") _
+import groovy.json.JsonSlurper
+import java.text.SimpleDateFormat
 import com.endorlabs.DockerScan
 import com.endorlabs.SyncOrg
 import com.endorlabs.Checkout
@@ -7,6 +9,21 @@ def SyncOrg = new SyncOrg()
 def args = [:]
 getParameters(args)
 def projects = []
+
+// Define a function to check if the latest commit is newer than one week
+def isCommitNewerThanOneWeek(repo) {
+    def dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
+    def oneWeekAgo = new Date() - 7
+
+    def apiUrl = "https://api.github.com/repos/$repo/commits?per_page=1"
+    def response = new URL(apiUrl).text
+    def json = new JsonSlurper().parseText(response)
+    def commitDate = json[0].commit.author.date
+
+    def commitTimestamp = dateFormat.parse(commitDate)
+    echo "For project: ${project} the newer commit flag is ${commitTimestamp.after(oneWeekAgo)}"
+    return commitTimestamp.after(oneWeekAgo)
+}
 
 pipeline {
   agent {
@@ -37,9 +54,10 @@ pipeline {
             echo "Skipping 'sync-org' as Project List is provided"
             def projectList = args['PROJECT_LIST'].strip().split('\n')
             for (String project: projectList) {
-              if (project) {
+              if (project && isCommitNewerThanOneWeek(project)) {
                 projects.add(project.strip())
-              }
+              } else {
+                echo "Did not add project to projects list: ${project.strip()}"
             }
             def projectCount = projects.size()
             echo "Project Count: ${projectCount}"
