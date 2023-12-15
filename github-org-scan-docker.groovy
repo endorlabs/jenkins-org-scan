@@ -8,6 +8,20 @@ def args = [:]
 getParameters(args)
 def projects = []
 
+// Define a function to check if the latest commit is newer than one week
+def isCommitNewerThanOneWeek(repo) {
+    def dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
+    def oneWeekAgo = new Date() - 7
+
+    def apiUrl = "https://api.github.com/repos/$repo/commits?per_page=1"
+    def response = new URL(apiUrl).text
+    def json = new JsonSlurper().parseText(response)
+    def commitDate = json[0].commit.author.date
+
+    def commitTimestamp = dateFormat.parse(commitDate)
+    return commitTimestamp.after(oneWeekAgo)
+}
+
 pipeline {
   agent {
     label args['AGENT_LABEL']
@@ -37,7 +51,7 @@ pipeline {
             echo "Skipping 'sync-org' as Project List is provided"
             def projectList = args['PROJECT_LIST'].strip().split('\n')
             for (String project: projectList) {
-              if (project) {
+              if (project && isCommitNewerThanOneWeek(project)) {
                 projects.add(project.strip())
               }
             }
