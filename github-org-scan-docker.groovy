@@ -76,7 +76,11 @@ pipeline {
           }
           echo "List of Projects:\n" + projects.join("\n")
           echo "Cleaning up projects older than a week"
-          projects.removeAll { item -> isCommitNewerThanOneWeek(item) }
+          for (int i = projectList.size() -1; i >= 0; i--) {
+            if (!isCommitNewerThanOneWeek(projectList[i])) {
+               projectList.remove(i)
+            }
+          }
           echo "List of Projects after cleanup:\n" + projects.join("\n")
         }
       }
