@@ -58,7 +58,7 @@ pipeline {
                 projects.add(project.strip())
               } else {
                 echo "Did not add project to projects list: ${project.strip()}"
-            }
+              }
             def projectCount = projects.size()
             echo "Project Count: ${projectCount}"
           } else {
