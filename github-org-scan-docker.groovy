@@ -56,7 +56,10 @@ pipeline {
             for (String project: projectList) {
               if (project && isCommitNewerThanOneWeek(project)) {
                 projects.add(project.strip())
-              }
+              } else {
+                echo "Did not add project to the list (1 week check): ${project.strip()}"
+	      }
+            }
             def projectCount = projects.size()
             echo "Project Count: ${projectCount}"
           } else {
