@@ -32,7 +32,7 @@ def isCommitNewerThanOneWeek(projectUrl) {
     def commitDate = json[0].commit.author.date
 
     def commitTimestamp = dateFormat.parse(commitDate)
-    echo "For project: ${project} the newer commit flag is ${commitTimestamp.after(oneWeekAgo)}"
+    echo "For project: ${projectUrl} the newer commit flag is ${commitTimestamp.after(oneWeekAgo)}"
     return commitTimestamp.after(oneWeekAgo)
 }
 
