@@ -16,7 +16,7 @@ def isCommitNewerThanOneWeek(repo) {
     def oneWeekAgo = new Date() - 7
 
     def apiUrl = "https://api.github.com/repos/$repo/commits?per_page=1"
-    def response = new URL(apiUrl).text
+    def response = new URL(apiUrl).getText()
     def json = new JsonSlurper().parseText(response)
     def commitDate = json[0].commit.author.date
 
