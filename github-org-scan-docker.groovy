@@ -10,18 +10,29 @@ def args = [:]
 getParameters(args)
 def projects = []
 
+def extractRepoFromGitURL(projectUrl) {
+  // Extract the path part of the URL
+  def path = new URL(projectUrl).path
+  // Remove leading and trailing slashes
+  path = path = path.replaceAll('^/|/$', '').replaceAll('\\.git$', '')
+  println "Extracted path: ${path}"
+  return path
+}
+
 // Define a function to check if the latest commit is newer than one week
-def isCommitNewerThanOneWeek(repo) {
+def isCommitNewerThanOneWeek(projectUrl) {
     def dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
     def oneWeekAgo = new Date() - 7
 
-    def apiUrl = "https://api.github.com/repos/$repo/commits?per_page=1"
-    def response = new URL(apiUrl).text
+    def repo = extractRepoFromGitURL(projectUrl)
+
+    def apiUrl = new URL("https://api.github.com/repos/$repo/commits?per_page=1")
+    def response = apiUrl.getText()
     def json = new JsonSlurper().parseText(response)
     def commitDate = json[0].commit.author.date
 
     def commitTimestamp = dateFormat.parse(commitDate)
-    echo "For project: ${project} the newer commit flag is ${commitTimestamp.after(oneWeekAgo)}"
+    echo "For project: ${projectUrl} the newer commit flag is ${commitTimestamp.after(oneWeekAgo)}"
     return commitTimestamp.after(oneWeekAgo)
 }
 
@@ -54,11 +65,9 @@ pipeline {
             echo "Skipping 'sync-org' as Project List is provided"
             def projectList = args['PROJECT_LIST'].strip().split('\n')
             for (String project: projectList) {
-              if (project && isCommitNewerThanOneWeek(project)) {
+              if (project) {
                 projects.add(project.strip())
-              } else {
-                echo "Did not add project to the list (1 week check): ${project.strip()}"
-	      }
+              }
             }
             def projectCount = projects.size()
             echo "Project Count: ${projectCount}"
@@ -77,6 +86,9 @@ pipeline {
             SyncOrg.getProjectList(projects, this, args)
           }
           echo "List of Projects:\n" + projects.join("\n")
+          echo "Cleaning up projects older than a week\n"
+          projects.removeAll { item -> !isCommitNewerThanOneWeek(item) }
+          echo "List of Projects after cleanup:\n" + projects.join("\n")
         }
       }
     }
