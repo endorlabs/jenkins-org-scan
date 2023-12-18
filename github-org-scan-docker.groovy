@@ -330,4 +330,9 @@ def getParameters(def args) {
   } else if (env.EXCLUDE_PROJECTS) {
     args['EXCLUDE_PROJECTS'] = env.EXCLUDE_PROJECTS
   }
+  if(params.SCAN_PROJECTS_COMMITS_ONE_WEEK) {
+    args['SCAN_PROJECTS_COMMITS_ONE_WEEK'] = params.SCAN_PROJECTS_COMMITS_ONE_WEEK
+  } else {
+    args['SCAN_PROJECTS_COMMITS_ONE_WEEK'] = env.SCAN_PROJECTS_COMMITS_ONE_WEEK
+  }
 }
