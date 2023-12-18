@@ -77,6 +77,8 @@ Configure the following GitHub enterprise server parameters in the Jenkins pipel
 - `LANGUAGES`: This is a *string parameter*. Use this field to set programming languages to scan. Supported languages: c#, go, java, javascript, php, python, ruby, rust, scala, typescript. Defaults to all supported languages.
 - `ADDITIONAL_ARGS`: This is a *string parameter*. Use this field to pass any additional parameters to the endorctl scan.
 - `PROJECT_LIST`: This is a *multi-line string parameter*. List of projects to scan. Even though all projects are synchronized, scans run only on the provided projects.
+- `SCAN_PROJECTS_COMMITS_ONE_WEEK`: This is a *boolean string parameter*. If this flag is enabled, then the projects that have a commit in the last one week will be scanned.
+
     > **Note**: If a proper SSL Certificate (a certificate issued by a well-known CA) is not used for Github Enterprise, the `sync-org` command will fail and won't be able to fetch the projects or repositories to scan from the GitHub enterprise server. You can use this field to provide the list of projects or repositories to scan one per line. For example:
 
     ```

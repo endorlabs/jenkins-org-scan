@@ -25,17 +25,21 @@ def isCommitNewerThanOneWeek(projectUrl) {
     def oneWeekAgo = new Date() - 7
 
     def repo = extractRepoFromGitURL(projectUrl)
-
-    def apiUrl = new URL("https://api.github.com/repos/$repo/commits?per_page=1")
-    def response = apiUrl.getText()
-    def json = new JsonSlurper().parseText(response)
-    def commitDate = json[0].commit.author.date
     def commitInLastOneWeek = false
-    if(json[0].commit.author.date) {
-      echo "Commit date is present in JSON format"
-      def commitTimestamp = dateFormat.parse(commitDate)
-      commitInLastOneWeek = commitTimestamp.after(oneWeekAgo)
-      echo "For project: ${projectUrl} the newer commit flag is ${commitInLastOneWeek}"
+    try {
+          def apiUrl = new URL("https://api.github.com/repos/$repo/commits?per_page=1")
+          def response = apiUrl.getText()
+          def json = new JsonSlurper().parseText(response)
+          def commitDate = json[0].commit.author.date
+          
+          if(json[0].commit.author.date) {
+            echo "Commit date is present in JSON format"
+            def commitTimestamp = dateFormat.parse(commitDate)
+            commitInLastOneWeek = commitTimestamp.after(oneWeekAgo)
+            echo "For project: ${projectUrl} the newer commit flag is ${commitInLastOneWeek}"
+          }
+    } catch (FileNotFoundException f) {
+      echo "Failed to get Commit Information from the URL."
     }
     
     return commitInLastOneWeek
