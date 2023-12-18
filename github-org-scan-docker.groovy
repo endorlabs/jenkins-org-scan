@@ -86,9 +86,13 @@ pipeline {
             SyncOrg.getProjectList(projects, this, args)
           }
           echo "List of Projects:\n" + projects.join("\n")
-          echo "Cleaning up projects older than a week\n"
-          projects.removeAll { item -> !isCommitNewerThanOneWeek(item) }
-          echo "List of Projects after cleanup:\n" + projects.join("\n")
+          if (args[SCAN_PROJECTS_COMMITS_ONE_WEEK].toBoolean()) {
+            echo "Cleaning up projects older than a week\n"
+            projects.removeAll { item -> !isCommitNewerThanOneWeek(item) }
+            echo "List of Projects after cleanup:\n" + projects.join("\n")            
+          } else {
+            echo "Commit time check not performed. Parameter was not enabled."
+          }
         }
       }
     }
