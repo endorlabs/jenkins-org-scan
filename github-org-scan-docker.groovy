@@ -30,14 +30,15 @@ def isCommitNewerThanOneWeek(projectUrl) {
     def response = apiUrl.getText()
     def json = new JsonSlurper().parseText(response)
     def commitDate = json[0].commit.author.date
-    def commitTimeStampInLastOneWeek = false
+    def commitInLastOneWeek = false
     if(json[0].commit.author.date) {
       echo "Commit date is present in JSON format"
       def commitTimestamp = dateFormat.parse(commitDate)
-      echo "For project: ${projectUrl} the newer commit flag is ${commitTimestamp.after(oneWeekAgo)}"
+      commitInLastOneWeek = commitTimestamp.after(oneWeekAgo)
+      echo "For project: ${projectUrl} the newer commit flag is ${commitInLastOneWeek}"
     }
     
-    return commitTimestamp.after(oneWeekAgo)
+    return commitInLastOneWeek
 }
 
 pipeline {
