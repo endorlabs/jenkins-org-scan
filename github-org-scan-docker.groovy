@@ -30,9 +30,13 @@ def isCommitNewerThanOneWeek(projectUrl) {
     def response = apiUrl.getText()
     def json = new JsonSlurper().parseText(response)
     def commitDate = json[0].commit.author.date
-
-    def commitTimestamp = dateFormat.parse(commitDate)
-    echo "For project: ${projectUrl} the newer commit flag is ${commitTimestamp.after(oneWeekAgo)}"
+    def commitTimeStampInLastOneWeek = false
+    if(json[0].commit.author.date) {
+      echo "Commit date is present in JSON format"
+      def commitTimestamp = dateFormat.parse(commitDate)
+      echo "For project: ${projectUrl} the newer commit flag is ${commitTimestamp.after(oneWeekAgo)}"
+    }
+    
     return commitTimestamp.after(oneWeekAgo)
 }
 
@@ -86,7 +90,7 @@ pipeline {
             SyncOrg.getProjectList(projects, this, args)
           }
           echo "List of Projects:\n" + projects.join("\n")
-          if (args[SCAN_PROJECTS_COMMITS_ONE_WEEK].toBoolean()) {
+          if (args['SCAN_PROJECTS_COMMITS_ONE_WEEK'].toBoolean()) {
             echo "Cleaning up projects older than a week\n"
             projects.removeAll { item -> !isCommitNewerThanOneWeek(item) }
             echo "List of Projects after cleanup:\n" + projects.join("\n")            
