@@ -20,9 +20,9 @@ def extractRepoFromGitURL(projectUrl) {
 }
 
 // Define a function to check if the latest commit is newer than one week
-def isCommitNewerThanOneWeek(projectUrl) {
+def isCommitNewerThanOneWeek(projectUrl, numberOfDays) {
     def dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
-    def oneWeekAgo = new Date() - 7
+    def oneWeekAgo = new Date() - numberOfDays
 
     def repo = extractRepoFromGitURL(projectUrl)
     def commitInLastOneWeek = false
@@ -40,6 +40,8 @@ def isCommitNewerThanOneWeek(projectUrl) {
           }
     } catch (FileNotFoundException f) {
       echo "Failed to get Commit Information from the URL."
+      // marking this as true to mimic current behavior as well as the behavior when commit time check flag is unchecked.
+      commitInLastOneWeek = true
     }
     
     return commitInLastOneWeek
@@ -95,9 +97,9 @@ pipeline {
             SyncOrg.getProjectList(projects, this, args)
           }
           echo "List of Projects:\n" + projects.join("\n")
-          if (args['SCAN_PROJECTS_COMMITS_ONE_WEEK'].toBoolean()) {
+          if (args['SCAN_PROJECTS_BY_LAST_COMMIT'].toInteger() > 0) {
             echo "Cleaning up projects older than a week\n"
-            projects.removeAll { item -> !isCommitNewerThanOneWeek(item) }
+            projects.removeAll { item -> !isCommitNewerThanOneWeek(item, args['SCAN_PROJECTS_BY_LAST_COMMIT'].toInteger()) }
             echo "List of Projects after cleanup:\n" + projects.join("\n")            
           } else {
             echo "Commit time check not performed. Parameter was not enabled."
@@ -335,9 +337,9 @@ def getParameters(def args) {
   } else if (env.EXCLUDE_PROJECTS) {
     args['EXCLUDE_PROJECTS'] = env.EXCLUDE_PROJECTS
   }
-  if(params.SCAN_PROJECTS_COMMITS_ONE_WEEK) {
-    args['SCAN_PROJECTS_COMMITS_ONE_WEEK'] = params.SCAN_PROJECTS_COMMITS_ONE_WEEK
+  if(params.SCAN_PROJECTS_BY_LAST_COMMIT) {
+    args['SCAN_PROJECTS_BY_LAST_COMMIT'] = params.SCAN_PROJECTS_BY_LAST_COMMIT
   } else {
-    args['SCAN_PROJECTS_COMMITS_ONE_WEEK'] = env.SCAN_PROJECTS_COMMITS_ONE_WEEK
+    args['SCAN_PROJECTS_BY_LAST_COMMIT'] = env.SCAN_PROJECTS_BY_LAST_COMMIT
   }
 }
