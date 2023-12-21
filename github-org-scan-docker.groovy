@@ -20,12 +20,12 @@ def extractRepoFromGitURL(projectUrl) {
 }
 
 // Define a function to check if the latest commit is newer than one week
-def isCommitNewerThanOneWeek(projectUrl, numberOfDays) {
+def isCommitNewerThanNDays(projectUrl, numberOfDays) {
     def dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
     def oneWeekAgo = new Date() - numberOfDays
 
     def repo = extractRepoFromGitURL(projectUrl)
-    def commitInLastOneWeek = false
+    def commitInLastNDays = false
     try {
           def apiUrl = new URL("https://api.github.com/repos/$repo/commits?per_page=1")
           def response = apiUrl.getText()
@@ -35,16 +35,16 @@ def isCommitNewerThanOneWeek(projectUrl, numberOfDays) {
           if(json[0].commit.author.date) {
             echo "Commit date is present in JSON format"
             def commitTimestamp = dateFormat.parse(commitDate)
-            commitInLastOneWeek = commitTimestamp.after(oneWeekAgo)
-            echo "For project: ${projectUrl} the newer commit flag is ${commitInLastOneWeek}"
+            commitInLastNDays = commitTimestamp.after(oneWeekAgo)
+            echo "For project: ${projectUrl} the newer commit flag is ${commitInLastNDays}"
           }
     } catch (FileNotFoundException f) {
       echo "Failed to get Commit Information from the URL."
       // marking this as true to mimic current behavior as well as the behavior when commit time check flag is unchecked.
-      commitInLastOneWeek = true
+      commitInLastNDays = true
     }
     
-    return commitInLastOneWeek
+    return commitInLastNDays
 }
 
 pipeline {
@@ -98,8 +98,8 @@ pipeline {
           }
           echo "List of Projects:\n" + projects.join("\n")
           if (args['SCAN_PROJECTS_BY_LAST_COMMIT'].toInteger() > 0) {
-            echo "Cleaning up projects older than a week\n"
-            projects.removeAll { item -> !isCommitNewerThanOneWeek(item, args['SCAN_PROJECTS_BY_LAST_COMMIT'].toInteger()) }
+            echo "Cleaning up projects older than a ${args['SCAN_PROJECTS_BY_LAST_COMMIT'].toInteger()} days"
+            projects.removeAll { item -> !isCommitNewerThanNDays(item, args['SCAN_PROJECTS_BY_LAST_COMMIT'].toInteger()) }
             echo "List of Projects after cleanup:\n" + projects.join("\n")            
           } else {
             echo "Commit time check not performed. Parameter was not enabled."
