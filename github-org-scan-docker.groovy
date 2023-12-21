@@ -38,7 +38,7 @@ def isCommitNewerThanNDays(projectUrl, numberOfDays) {
             commitInLastNDays = commitTimestamp.after(oneWeekAgo)
             echo "For project: ${projectUrl} the newer commit flag is ${commitInLastNDays}"
           }
-    } catch (FileNotFoundException f) {
+    } catch (Exception e) {
       echo "Failed to get Commit Information from the URL."
       // marking this as true to mimic current behavior as well as the behavior when commit time check flag is unchecked.
       commitInLastNDays = true
