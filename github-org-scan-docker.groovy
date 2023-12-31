@@ -20,20 +20,31 @@ def extractRepoFromGitURL(projectUrl) {
 }
 
 // Define a function to check if the latest commit is newer than one week
-def isCommitNewerThanOneWeek(projectUrl) {
+def isCommitNewerThanNDays(projectUrl, numberOfDays) {
     def dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
-    def oneWeekAgo = new Date() - 7
+    def nDaysAgo = new Date() - numberOfDays
 
     def repo = extractRepoFromGitURL(projectUrl)
-
-    def apiUrl = new URL("https://api.github.com/repos/$repo/commits?per_page=1")
-    def response = apiUrl.getText()
-    def json = new JsonSlurper().parseText(response)
-    def commitDate = json[0].commit.author.date
-
-    def commitTimestamp = dateFormat.parse(commitDate)
-    echo "For project: ${projectUrl} the newer commit flag is ${commitTimestamp.after(oneWeekAgo)}"
-    return commitTimestamp.after(oneWeekAgo)
+    def commitInLastNDays = false
+    try {
+          def apiUrl = new URL("https://api.github.com/repos/$repo/commits?per_page=1")
+          def response = apiUrl.getText()
+          def json = new JsonSlurper().parseText(response)
+          def commitDate = json[0].commit.author.date
+          
+          if(commitDate) {
+            echo "Commit date is present in JSON format"
+            def commitTimestamp = dateFormat.parse(commitDate)
+            commitInLastNDays = commitTimestamp.after(nDaysAgo)
+            echo "For project: ${projectUrl} the newer commit flag is ${commitInLastNDays}"
+          }
+    } catch (Exception e) {
+      echo "Failed to get Commit Information from the URL."
+      // Marking this as 'true' to mimic the current behavior as well as the behavior when commit time check flag is unchecked
+      commitInLastNDays = true
+    }
+    
+    return commitInLastNDays
 }
 
 pipeline {
@@ -86,9 +97,13 @@ pipeline {
             SyncOrg.getProjectList(projects, this, args)
           }
           echo "List of Projects:\n" + projects.join("\n")
-          echo "Cleaning up projects older than a week\n"
-          projects.removeAll { item -> !isCommitNewerThanOneWeek(item) }
-          echo "List of Projects after cleanup:\n" + projects.join("\n")
+          if (args['SCAN_PROJECTS_BY_LAST_COMMIT'].toInteger() > 0) {
+            echo "Cleaning up projects older than a ${args['SCAN_PROJECTS_BY_LAST_COMMIT'].toInteger()} days"
+            projects.removeAll { item -> !isCommitNewerThanNDays(item, args['SCAN_PROJECTS_BY_LAST_COMMIT'].toInteger()) }
+            echo "List of Projects after cleanup:\n" + projects.join("\n")            
+          } else {
+            echo "Commit time check not performed. Parameter was not enabled."
+          }
         }
       }
     }
@@ -321,5 +336,10 @@ def getParameters(def args) {
     args['EXCLUDE_PROJECTS'] = params.EXCLUDE_PROJECTS
   } else if (env.EXCLUDE_PROJECTS) {
     args['EXCLUDE_PROJECTS'] = env.EXCLUDE_PROJECTS
+  }
+  if(params.SCAN_PROJECTS_BY_LAST_COMMIT) {
+    args['SCAN_PROJECTS_BY_LAST_COMMIT'] = params.SCAN_PROJECTS_BY_LAST_COMMIT
+  } else {
+    args['SCAN_PROJECTS_BY_LAST_COMMIT'] = env.SCAN_PROJECTS_BY_LAST_COMMIT
   }
 }
