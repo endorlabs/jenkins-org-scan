@@ -339,7 +339,9 @@ def getParameters(def args) {
   }
   if(params.SCAN_PROJECTS_BY_LAST_COMMIT) {
     args['SCAN_PROJECTS_BY_LAST_COMMIT'] = params.SCAN_PROJECTS_BY_LAST_COMMIT
-  } else {
+  } else if (env.SCAN_PROJECTS_BY_LAST_COMMIT) {
     args['SCAN_PROJECTS_BY_LAST_COMMIT'] = env.SCAN_PROJECTS_BY_LAST_COMMIT
+  } else {
+    args['SCAN_PROJECTS_BY_LAST_COMMIT'] = 0
   }
 }
