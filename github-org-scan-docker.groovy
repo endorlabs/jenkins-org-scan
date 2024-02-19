@@ -29,7 +29,6 @@ def isCommitNewerThanNDays(projectUrl, numberOfDays) {
     def apiUrl = new URL("https://api.github.com/repos/$repo/commits?per_page=1")
     echo "Fetching commit information using URL - ${apiUrl}"
     try {
-          // def apiUrl = new URL("https://api.github.com/repos/$repo/commits?per_page=1")
           def response = apiUrl.getText()
           def json = new JsonSlurper().parseText(response)
           def commitDate = json[0].commit.author.date
