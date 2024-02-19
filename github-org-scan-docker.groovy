@@ -349,4 +349,5 @@ def getParameters(def args) {
   } else {
     args['SCAN_PROJECTS_BY_LAST_COMMIT'] = 0
   }
+  echo "Verbose Logs = ${args['LOG_VERBOSE']}
 }
