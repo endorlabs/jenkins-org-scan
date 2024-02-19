@@ -40,7 +40,9 @@ def isCommitNewerThanNDays(projectUrl, numberOfDays) {
           }
     } catch (Exception e) {
       echo "Failed to get Commit Information from the URL."
-      org.codehaus.groovy.runtime.StackTraceUtils.sanitize(e).printStackTrace()
+      for (StackTraceElement element in e.stackTrace) {
+          echo "  at ${element.className}.${element.methodName}(${element.lineNumber})"
+      }
       // Marking this as 'true' to mimic the current behavior as well as the behavior when commit time check flag is unchecked
       commitInLastNDays = true
     }
