@@ -39,7 +39,7 @@ def isCommitNewerThanNDays(projectUrl, numberOfDays) {
             echo "For project: ${projectUrl} the newer commit flag is ${commitInLastNDays}"
           }
     } catch (Exception e) {
-      echo "Failed to get Commit Information from the URL."
+      echo "Failed to get Commit Information from the URL - ${apiUrl}"
       for (StackTraceElement element in e.stackTrace) {
           echo "  at ${element.className}.${element.methodName}(${element.lineNumber})"
       }
