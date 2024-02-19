@@ -20,7 +20,7 @@ def extractRepoFromGitURL(projectUrl) {
 }
 
 // Define a function to check if the latest commit is newer than one week
-def isCommitNewerThanNDays(projectUrl, numberOfDays, verboseLogs) {
+def isCommitNewerThanNDays(projectUrl, numberOfDays) {
     def dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
     def nDaysAgo = new Date() - numberOfDays
     def repo = extractRepoFromGitURL(projectUrl)
@@ -39,11 +39,8 @@ def isCommitNewerThanNDays(projectUrl, numberOfDays, verboseLogs) {
             echo "For project: ${projectUrl} the newer commit flag is ${commitInLastNDays}"
           }
     } catch (Exception e) {
-      echo "Verbose log in method is ${verboseLogs}"
-      if(verboseLogs) {
-          echo "Failed to get Commit Information from the URL - exception ${e.message}"
-          echo "${e.stackTrace}"
-      }
+      echo "Failed to get Commit Information from the URL - exception ${e.message}"
+      echo "${e.stackTrace}"
       // Marking this as 'true' to mimic the current behavior as well as 
       // the behavior when commit time check flag is unchecked
       commitInLastNDays = true
@@ -104,7 +101,7 @@ pipeline {
           echo "List of Projects:\n" + projects.join("\n")
           if (args['SCAN_PROJECTS_BY_LAST_COMMIT'].toInteger() > 0) {
             echo "Cleaning up projects older than a ${args['SCAN_PROJECTS_BY_LAST_COMMIT'].toInteger()} days"
-            projects.removeAll { item -> !isCommitNewerThanNDays(item, args['SCAN_PROJECTS_BY_LAST_COMMIT'].toInteger(), args['LOG_VERBOSE']) }
+            projects.removeAll { item -> !isCommitNewerThanNDays(item, args['SCAN_PROJECTS_BY_LAST_COMMIT'].toInteger()) }
             echo "List of Projects after cleanup:\n" + projects.join("\n")            
           } else {
             echo "Commit time check not performed. Parameter was not enabled."
