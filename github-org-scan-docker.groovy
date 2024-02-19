@@ -23,7 +23,7 @@ def extractRepoFromGitURL(projectUrl) {
 def isCommitNewerThanNDays(projectUrl, numberOfDays, verboseLogs) {
     def dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
     def nDaysAgo = new Date() - numberOfDays
-
+    echo "Verbose log in method is ${verboseLogs}"
     def repo = extractRepoFromGitURL(projectUrl)
     def commitInLastNDays = false
     def apiUrl = new URL("https://api.github.com/repos/$repo/commits?per_page=1")
