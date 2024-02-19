@@ -23,6 +23,7 @@ def extractRepoFromGitURL(projectUrl) {
 def isCommitNewerThanNDays(projectUrl, numberOfDays) {
     def dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
     def nDaysAgo = new Date() - numberOfDays
+
     def repo = extractRepoFromGitURL(projectUrl)
     def commitInLastNDays = false
     def apiUrl = new URL("https://api.github.com/repos/$repo/commits?per_page=1")
@@ -346,5 +347,4 @@ def getParameters(def args) {
   } else {
     args['SCAN_PROJECTS_BY_LAST_COMMIT'] = 0
   }
-  echo "Verbose Logs = ${args['LOG_VERBOSE']}"
 }
