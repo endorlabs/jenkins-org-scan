@@ -23,7 +23,6 @@ def extractRepoFromGitURL(projectUrl) {
 def isCommitNewerThanNDays(projectUrl, numberOfDays, verboseLogs) {
     def dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
     def nDaysAgo = new Date() - numberOfDays
-    echo "Verbose log in method is ${verboseLogs}"
     def repo = extractRepoFromGitURL(projectUrl)
     def commitInLastNDays = false
     def apiUrl = new URL("https://api.github.com/repos/$repo/commits?per_page=1")
@@ -40,6 +39,7 @@ def isCommitNewerThanNDays(projectUrl, numberOfDays, verboseLogs) {
             echo "For project: ${projectUrl} the newer commit flag is ${commitInLastNDays}"
           }
     } catch (Exception e) {
+      echo "Verbose log in method is ${verboseLogs}"
       if(verboseLogs) {
           echo "Failed to get Commit Information from the URL - exception ${e.message}"
           echo "${e.stackTrace}"
