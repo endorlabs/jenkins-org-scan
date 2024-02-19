@@ -34,14 +34,14 @@ def isCommitNewerThanNDays(projectUrl, numberOfDays) {
           def commitDate = json[0].commit.author.date
           
           if(commitDate) {
-            echo "Commit date is present in JSON format"
+            echo "Commit date is present in JSON format for ${apiUrl}"
             def commitTimestamp = dateFormat.parse(commitDate)
             commitInLastNDays = commitTimestamp.after(nDaysAgo)
             echo "For project: ${projectUrl} the newer commit flag is ${commitInLastNDays}"
           }
     } catch (Exception e) {
-      echo "Failed to get Commit Information from the URL - ${apiUrl}"
-      e.printStackTrace()
+      echo "Failed to get Commit Information from the URL - ${apiUrl} with exception ${e.message}"
+      echo "${e.stackTrace}"
       // Marking this as 'true' to mimic the current behavior as well as the behavior when commit time check flag is unchecked
       commitInLastNDays = true
     }
