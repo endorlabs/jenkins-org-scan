@@ -41,7 +41,9 @@ def isCommitNewerThanNDays(projectUrl, numberOfDays) {
           }
     } catch (Exception e) {
       echo "Failed to get Commit Information from the URL - exception ${e.message}"
-      echo "${e.stackTrace}"
+      if(args['LOG_VERBOSE']) {
+          echo "${e.stackTrace}"
+      }
       // Marking this as 'true' to mimic the current behavior as well as 
       // the behavior when commit time check flag is unchecked
       commitInLastNDays = true
