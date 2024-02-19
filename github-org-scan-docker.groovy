@@ -40,8 +40,8 @@ def isCommitNewerThanNDays(projectUrl, numberOfDays, verboseLogs) {
             echo "For project: ${projectUrl} the newer commit flag is ${commitInLastNDays}"
           }
     } catch (Exception e) {
-      echo "Failed to get Commit Information from the URL - exception ${e.message}"
       if(verboseLogs) {
+          echo "Failed to get Commit Information from the URL - exception ${e.message}"
           echo "${e.stackTrace}"
       }
       // Marking this as 'true' to mimic the current behavior as well as 
