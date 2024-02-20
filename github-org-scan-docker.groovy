@@ -26,8 +26,9 @@ def isCommitNewerThanNDays(projectUrl, numberOfDays) {
 
     def repo = extractRepoFromGitURL(projectUrl)
     def commitInLastNDays = false
+    def apiUrl = new URL("https://api.github.com/repos/$repo/commits?per_page=1")
+    echo "Fetching commit information using URL - ${apiUrl}"
     try {
-          def apiUrl = new URL("https://api.github.com/repos/$repo/commits?per_page=1")
           def response = apiUrl.getText()
           def json = new JsonSlurper().parseText(response)
           def commitDate = json[0].commit.author.date
@@ -39,8 +40,10 @@ def isCommitNewerThanNDays(projectUrl, numberOfDays) {
             echo "For project: ${projectUrl} the newer commit flag is ${commitInLastNDays}"
           }
     } catch (Exception e) {
-      echo "Failed to get Commit Information from the URL."
-      // Marking this as 'true' to mimic the current behavior as well as the behavior when commit time check flag is unchecked
+      echo "Failed to get Commit Information from the URL - exception ${e.message}"
+      echo "${e.stackTrace}"
+      // Marking this as 'true' to mimic the current behavior as well as 
+      // the behavior when commit time check flag is unchecked
       commitInLastNDays = true
     }
     
