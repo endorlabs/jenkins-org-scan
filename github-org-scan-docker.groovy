@@ -29,7 +29,21 @@ def isCommitNewerThanNDays(projectUrl, numberOfDays) {
     def apiUrl = new URL("https://api.github.com/repos/$repo/commits?per_page=1")
     echo "Fetching commit information using URL - ${apiUrl}"
     try {
-          def response = apiUrl.getText()
+          // Open a connection
+          def connection = apiUrl.openConnection()
+          // Set the request method
+          connection.setRequestMethod('GET')
+          // Get the access token from the environment variable
+          def accessToken = System.getenv('GITHUB_TOKEN')
+          // Set the access token in the Authorization header
+          connection.setRequestProperty('Authorization', "token $accessToken")
+          // Send the request
+          connection.connect()
+          // Read the response
+          def responseCode = connection.getResponseCode()
+          println "Response code: for $apiUrl is $responseCode"
+
+          def response = connection.inputStream.text
           def json = new JsonSlurper().parseText(response)
           def commitDate = json[0].commit.author.date
           
