@@ -75,7 +75,7 @@ pipeline {
     skipDefaultCheckout()
   }
   environment {
-    // GITHUB_TOKEN = credentials('GITHUB_TOKEN')
+    GITHUB_TOKEN = credentials('GITHUB_TOKEN')
     ENDOR_LABS_API_KEY = credentials('ENDOR_LABS_API_KEY')
     ENDOR_LABS_API_SECRET = credentials('ENDOR_LABS_API_SECRET')
   }
