@@ -34,7 +34,7 @@ def isCommitNewerThanNDays(projectUrl, numberOfDays) {
           // Set the request method
           connection.setRequestMethod('GET')
           // Get the access token from the environment variable
-          def githubToken = System.getenv('GITHUB_TOKEN')
+          def githubToken = env.GITHUB_TOKEN
           // Set the access token in the Authorization header
           connection.setRequestProperty('Authorization', "token ${githubToken}")
           connection.setRequestProperty('X-GitHub-Api-Version','2022-11-28')
