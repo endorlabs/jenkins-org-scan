@@ -75,9 +75,9 @@ pipeline {
     skipDefaultCheckout()
   }
   environment {
-    GITHUB_TOKEN = credentials('GITHUB_TOKEN')
-    ENDOR_LABS_API_KEY = credentials('ENDOR_LABS_API_KEY')
-    ENDOR_LABS_API_SECRET = credentials('ENDOR_LABS_API_SECRET')
+    GITHUB_TOKEN = credentials('CHANDRA_GH_PAT')
+    ENDOR_LABS_API_KEY = credentials('CHANDRA_ENDOR_KEY')
+    ENDOR_LABS_API_SECRET = credentials('CHANDRA_ENDOR_SECRET')
   }
   stages {
     stage('Docker Pull') {
