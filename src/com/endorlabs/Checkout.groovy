@@ -19,13 +19,17 @@ class Checkout implements Serializable {
   * 
   * This function will clone the Git repository from the specified URL into the Jenkins workspace.
   */
-  def clone(def pipeline, def args, String url, String workspace) {
+  def clone(def pipeline, def args, String url, String workspace, Boolean shallowClone) {
     if (args['GITHUB_DISABLE_SSL_VERIFY']) {
       disableSslVerify(pipeline)
     }
     def hostName = pipeline.sh(returnStdout: true, script: "uname -n").trim()
     def gitClone = 'GITHUB_TOKEN=' + pipeline.env.GITHUB_TOKEN
-    gitClone += ' git clone ' + url + ' "' + workspace + '"'
+    gitClone += ' git clone '
+    if (shallowClone) {
+      gitClone += 'depth -1 '
+    }
+    gitClone += url + ' "' + workspace + '"'
     pipeline.sh(gitClone)
     pipeline.echo("Cloned ${url} in ${workspace} on ${hostName}")
     return

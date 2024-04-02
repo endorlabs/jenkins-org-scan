@@ -10,60 +10,14 @@ def args = [:]
 getParameters(args)
 def projects = []
 
-def extractRepoFromGitURL(projectUrl) {
-  // Extract the path part of the URL
-  def path = new URL(projectUrl).path
-  // Remove leading and trailing slashes
-  path = path = path.replaceAll('^/|/$', '').replaceAll('\\.git$', '')
-  println "Extracted path: ${path}"
-  return path
-}
-
-// Define a function to check if the latest commit is newer than one week
-def isCommitNewerThanNDays(projectUrl, numberOfDays) {
-    def dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
-    def nDaysAgo = new Date() - numberOfDays
-
-    def repo = extractRepoFromGitURL(projectUrl)
-    def commitInLastNDays = false
-    def apiUrl = new URL("https://api.github.com/repos/$repo/commits?per_page=1")
-    echo "Fetching commit information using URL - ${apiUrl}"
-    try {
-          // Open a connection
-          def connection = apiUrl.openConnection()
-          // Set the request method
-          connection.setRequestMethod('GET')
-          // Get the access token from the environment variable
-          def githubToken = env.GITHUB_TOKEN
-          // Set the access token in the Authorization header
-          connection.setRequestProperty('Authorization', "token ${githubToken}")
-          connection.setRequestProperty('X-GitHub-Api-Version','2022-11-28')
-          // Send the request
-          connection.connect()
-          // Read the response
-          def responseCode = connection.getResponseCode()
-          println "Response code: for $apiUrl is $responseCode"
-
-          def response = connection.inputStream.text
-          def json = new JsonSlurper().parseText(response)
-          def commitDate = json[0].commit.author.date
-          
-          if(commitDate) {
-            echo "Commit date is present in JSON format"
-            def commitTimestamp = dateFormat.parse(commitDate)
-            commitInLastNDays = commitTimestamp.after(nDaysAgo)
-            echo "For project: ${projectUrl} the newer commit flag is ${commitInLastNDays}"
-          }
-    } catch (Exception e) {
-      echo "Failed to get Commit Information from the URL - exception ${e.message}"
-      echo "${e.stackTrace}"
-      // Marking this as 'true' to mimic the current behavior as well as 
-      // the behavior when commit time check flag is unchecked
-      commitInLastNDays = true
-    }
-    
-    return commitInLastNDays
-}
+// def extractRepoFromGitURL(projectUrl) {
+//   // Extract the path part of the URL
+//   def path = new URL(projectUrl).path
+//   // Remove leading and trailing slashes
+//   path = path = path.replaceAll('^/|/$', '').replaceAll('\\.git$', '')
+//   println "Extracted path: ${path}"
+//   return path
+// }
 
 pipeline {
   agent {
@@ -117,8 +71,7 @@ pipeline {
           echo "List of Projects:\n" + projects.join("\n")
           if (args['SCAN_PROJECTS_BY_LAST_COMMIT'].toInteger() > 0) {
             echo "Cleaning up projects older than a ${args['SCAN_PROJECTS_BY_LAST_COMMIT'].toInteger()} days"
-            // projects.removeAll { item -> !isCommitNewerThanNDays(item, args['SCAN_PROJECTS_BY_LAST_COMMIT'].toInteger()) }
-            projects.removeAll { item -> !projectHasCommitsWithinLastNDays(item, args, args['SCAN_PROJECTS_BY_LAST_COMMIT'].toInteger()) }
+            projects.removeAll { item -> !projectHasCommitsWithinLastNDays(item, args) }
             echo "List of Projects after cleanup:\n" + projects.join("\n")            
           } else {
             echo "Commit time check not performed. Parameter was not enabled."
@@ -174,7 +127,7 @@ def generate_scan_stages(def targets, def project, def args) {
           try {
             String workspace = Checkout.getWorkSpace(this, project)
             Checkout.setCredentialHelper(this)
-            Checkout.clone(this, args, project, workspace)
+            Checkout.clone(this, args, project, workspace, false)
             def branch = Checkout.getDefaultBranch(this, project, workspace)
             Checkout.execute(this, branch, workspace)
             DockerScan.execute(this, args, project, branch, workspace)
@@ -188,31 +141,30 @@ def generate_scan_stages(def targets, def project, def args) {
   }
 }
 
-def projectHasCommitsWithinLastNDays(String url, def args, int numberOfDays){
-  
+def projectHasCommitsWithinLastNDays(String url, def args){
+   def numberOfDays = args['SCAN_PROJECTS_BY_LAST_COMMIT'].toInteger()
+   def nDaysAgo = new Date() - numberOfDays
+   def hasCommitInLastNDays = false
+
    def Checkout = new Checkout()
    String workspace = Checkout.getWorkSpace(this, url)
    Checkout.setCredentialHelper(this)
-   // do shallow clone
-   Checkout.clone(this, args, url, workspace)
+   Checkout.clone(this, args, url, workspace, true)
 
    def dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX")
-   def nDaysAgo = new Date() - numberOfDays
 
-   def commitInLastNDays = false
   commitDate = getLastCommitDate(this)
   if(commitDate) {
-            echo "Last commit date has been fetched as: "+commitDate
+            echo "For project: ${url} last commit date is: ${commitDate}"
             def commitTimestamp = dateFormat.parse(commitDate)
-            commitInLastNDays = commitTimestamp.after(nDaysAgo)
-            echo "For project: ${url} the newer commit flag is ${commitInLastNDays}"
+            hasCommitInLastNDays = commitTimestamp.after(nDaysAgo)
+            echo "For project: ${url} the newer commit flag is ${hasCommitInLastNDays}"
   }
 
-  return commitInLastNDays
+  return hasCommitInLastNDays
 }
 
 def getLastCommitDate(def pipeline){
-
    def lastCommitInfoCmd = 'cd "' + workspace + '" &&'
    lastCommitInfoCmd += ' git log -1 --pretty=format:%aI'
    def commitDate = pipeline.sh(returnStdout: true, script: lastCommitInfoCmd).trim()
