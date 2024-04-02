@@ -117,7 +117,8 @@ pipeline {
           echo "List of Projects:\n" + projects.join("\n")
           if (args['SCAN_PROJECTS_BY_LAST_COMMIT'].toInteger() > 0) {
             echo "Cleaning up projects older than a ${args['SCAN_PROJECTS_BY_LAST_COMMIT'].toInteger()} days"
-            projects.removeAll { item -> !isCommitNewerThanNDays(item, args['SCAN_PROJECTS_BY_LAST_COMMIT'].toInteger()) }
+            // projects.removeAll { item -> !isCommitNewerThanNDays(item, args['SCAN_PROJECTS_BY_LAST_COMMIT'].toInteger()) }
+            projects.removeAll { item -> !projectHasCommitsWithinLastNDays(item, args) }
             echo "List of Projects after cleanup:\n" + projects.join("\n")            
           } else {
             echo "Commit time check not performed. Parameter was not enabled."
@@ -185,6 +186,33 @@ def generate_scan_stages(def targets, def project, def args) {
       }
     }
   }
+}
+
+def projectHasCommitsWithinLastNDays(String url, def args){
+   def numberOfDays = args['SCAN_PROJECTS_BY_LAST_COMMIT'].toInteger()
+   def Checkout = new Checkout()
+   String workspace = Checkout.getWorkSpace(this, url)
+   Checkout.setCredentialHelper(this)
+   // do shallow clone
+   Checkout.clone(this, args, url, workspace)
+
+   def dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
+   def nDaysAgo = new Date() - numberOfDays
+
+   def lastCommitInfoCmd = 'cd "' + workspace + '" &&'
+   lastCommitInfoCmd += ' git log -1 --pretty=format:%aI'
+   def commitDate = pipeline.sh(returnStdout: true, script: lastCommitInfoCmd).trim()
+
+   def commitInLastNDays = false
+ 
+  if(commitDate) {
+            echo "Last commit date has been fetched as: "+commitDate
+            def commitTimestamp = dateFormat.parse(commitDate)
+            commitInLastNDays = commitTimestamp.after(nDaysAgo)
+            echo "For project: ${projectUrl} the newer commit flag is ${commitInLastNDays}"
+  }
+
+  return commitInLastNDays
 }
 
 /**
