@@ -19,7 +19,7 @@ class Checkout implements Serializable {
   * 
   * This function will clone the Git repository from the specified URL into the Jenkins workspace.
   */
-  def clone(def pipeline, def args, String url, String workspace, Boolean shallowClone) {
+  def clone(def pipeline, def args, String url, String workspace, boolean shallowClone) {
     if (args['GITHUB_DISABLE_SSL_VERIFY']) {
       disableSslVerify(pipeline)
     }
