@@ -196,7 +196,7 @@ def projectHasCommitsWithinLastNDays(String url, def args, int numberOfDays){
    // do shallow clone
    Checkout.clone(this, args, url, workspace)
 
-   def dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
+   def dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX")
    def nDaysAgo = new Date() - numberOfDays
 
    def commitInLastNDays = false
