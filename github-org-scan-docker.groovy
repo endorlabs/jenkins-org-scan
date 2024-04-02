@@ -205,7 +205,7 @@ def projectHasCommitsWithinLastNDays(String url, def args, int numberOfDays){
             echo "Last commit date has been fetched as: "+commitDate
             def commitTimestamp = dateFormat.parse(commitDate)
             commitInLastNDays = commitTimestamp.after(nDaysAgo)
-            echo "For project: ${projectUrl} the newer commit flag is ${commitInLastNDays}"
+            echo "For project: ${url} the newer commit flag is ${commitInLastNDays}"
   }
 
   return commitInLastNDays
