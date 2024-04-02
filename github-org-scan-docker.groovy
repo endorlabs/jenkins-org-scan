@@ -153,7 +153,7 @@ def projectHasCommitsWithinLastNDays(String url, def args){
 
    def dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX")
 
-  commitDate = getLastCommitDate(this)
+  commitDate = getLastCommitDate(this, workspace)
   if(commitDate) {
             echo "For project: ${url} last commit date is: ${commitDate}"
             def commitTimestamp = dateFormat.parse(commitDate)
@@ -164,7 +164,7 @@ def projectHasCommitsWithinLastNDays(String url, def args){
   return hasCommitInLastNDays
 }
 
-def getLastCommitDate(def pipeline){
+def getLastCommitDate(def pipeline, String workspace){
    def lastCommitInfoCmd = 'cd "' + workspace + '" &&'
    lastCommitInfoCmd += ' git log -1 --pretty=format:%aI'
    def commitDate = pipeline.sh(returnStdout: true, script: lastCommitInfoCmd).trim()
