@@ -127,7 +127,7 @@ def generate_scan_stages(def targets, def project, def args) {
           try {
             String workspace = Checkout.getWorkSpace(this, project)
             Checkout.setCredentialHelper(this)
-            Checkout.clone(this, args, project, workspace, shallowClone: false)
+            Checkout.clone(this, args, project, workspace, false)
             def branch = Checkout.getDefaultBranch(this, project, workspace)
             Checkout.execute(this, branch, workspace)
             DockerScan.execute(this, args, project, branch, workspace)
@@ -149,7 +149,7 @@ def projectHasCommitsWithinLastNDays(String url, def args){
    def Checkout = new Checkout()
    String workspace = Checkout.getWorkSpace(this, url)
    Checkout.setCredentialHelper(this)
-   Checkout.clone(this, args, url, workspace, shallowClone: true)
+   Checkout.clone(this, args, url, workspace, true)
 
    def dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX")
 
