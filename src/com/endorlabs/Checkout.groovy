@@ -28,7 +28,7 @@ class Checkout implements Serializable {
     def gitClone = 'GITHUB_TOKEN=' + pipeline.env.GITHUB_TOKEN
     gitClone += ' git clone '
     if (shallowClone) {
-      gitClone += 'depth -1 '
+      gitClone += '--depth 1 '
     }
     gitClone += url + ' "' + workspace + '"'
     pipeline.sh(gitClone)
