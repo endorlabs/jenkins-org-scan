@@ -118,7 +118,7 @@ pipeline {
           if (args['SCAN_PROJECTS_BY_LAST_COMMIT'].toInteger() > 0) {
             echo "Cleaning up projects older than a ${args['SCAN_PROJECTS_BY_LAST_COMMIT'].toInteger()} days"
             // projects.removeAll { item -> !isCommitNewerThanNDays(item, args['SCAN_PROJECTS_BY_LAST_COMMIT'].toInteger()) }
-            projects.removeAll { item -> !projectHasCommitsWithinLastNDays(item, args) }
+            projects.removeAll { item -> !projectHasCommitsWithinLastNDays(item, args, args['SCAN_PROJECTS_BY_LAST_COMMIT'].toInteger()) }
             echo "List of Projects after cleanup:\n" + projects.join("\n")            
           } else {
             echo "Commit time check not performed. Parameter was not enabled."
@@ -188,8 +188,8 @@ def generate_scan_stages(def targets, def project, def args) {
   }
 }
 
-def projectHasCommitsWithinLastNDays(String url, def args){
-   def numberOfDays = args['SCAN_PROJECTS_BY_LAST_COMMIT'].toInteger()
+def projectHasCommitsWithinLastNDays(String url, def args, int numberOfDays){
+  
    def Checkout = new Checkout()
    String workspace = Checkout.getWorkSpace(this, url)
    Checkout.setCredentialHelper(this)
