@@ -153,11 +153,12 @@ def projectHasCommitsWithinLastNDays(String url, def args, def projectsWithUUID)
     def hasCommitInLastNDays = false
 
     def Checkout = new Checkout()
-    String workspace = Checkout.getWorkSpace(this, url)
+    String wp = Checkout.getWorkSpace(this, url)
+    echo "workspace path generated for ${url} is ${wp}"
     Checkout.setCredentialHelper(this)
-    Checkout.clone(this, args, url, workspace, true)
+    Checkout.clone(this, args, url, wp, true)
 
-    data = getLastCommitData(this, workspace)
+    data = getLastCommitData(this, wp)
     String[] commitInfo = data.strip().split("\n")
     if (commitInfo.size() == 2) {
         commitDate = commitInfo[0]
