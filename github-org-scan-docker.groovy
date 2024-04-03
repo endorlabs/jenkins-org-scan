@@ -148,7 +148,6 @@ def projectHasCommitsWithinLastNDays(String url, def args){
   def dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX")
   def utcTimeFormat = getUTCTimeFormat()
   def curUTCTime = dateFormat.parse(utcTimeFormat.format(new Date()))
-  echo "current UTC time is ${curUTCTime}"
 
   def nDaysAgo = curUTCTime - numberOfDays
   def hasCommitInLastNDays = false
@@ -158,21 +157,25 @@ def projectHasCommitsWithinLastNDays(String url, def args){
   Checkout.setCredentialHelper(this)
   Checkout.clone(this, args, url, workspace, true)
 
-  commitDate = getLastCommitDate(this, workspace)
-  if(commitDate) {
-            echo "For project: ${url} last commit date is: ${commitDate}"
-            def commitTimestamp = utcTimeFormat.format(dateFormat.parse(commitDate))
-            echo "last commit date in UTC is: ${commitTimestamp}"
-            hasCommitInLastNDays = dateFormat.parse(commitTimestamp).after(nDaysAgo)
-            echo "For project: ${url} the newer commit flag is ${hasCommitInLastNDays}"
+  data = getLastCommitData(this, workspace)
+  // TODO: remove this echo 
+  echo "data = ${data}"
+  String[] commitInfo = data.strip().split("\n")
+  if(commitInfo.size == 2) {
+    commitDate = commitInfo[0]
+    echo "For project: ${url} last commit date is: ${commitDate}"
+    def commitTimestamp = utcTimeFormat.format(dateFormat.parse(commitDate))
+    echo "Comparing dates, include commit after=${nDaysAgo} and last commit date=${commitTimestamp}"
+    hasCommitInLastNDays = dateFormat.parse(commitTimestamp).after(nDaysAgo)
   }
 
+  echo "For project: ${url} the newer commit flag is ${hasCommitInLastNDays}"
   return hasCommitInLastNDays
 }
 
-def getLastCommitDate(def pipeline, String workspace){
+def getLastCommitData(def pipeline, String workspace){
    def lastCommitInfoCmd = 'cd "' + workspace + '" &&'
-   lastCommitInfoCmd += ' git log -1 --pretty=format:%aI'
+   lastCommitInfoCmd += ' git log -1 --pretty=format:%aI%n%H'
    def commitDate = pipeline.sh(returnStdout: true, script: lastCommitInfoCmd).trim()
    return commitDate
 }
