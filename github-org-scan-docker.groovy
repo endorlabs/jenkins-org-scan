@@ -189,13 +189,14 @@ def projectHasCommitsWithinLastNDays(String url, def args, def projectsWithUUID)
   def isCommitAlreadyScanned(def pipeline, def args, String project, String commit, def projectsWithUUID){
     boolean commitScanStatus = false
     String projUUID = ""
-    if(!projectsWithUUID.containsKey(project)){
+    if(!projectsWithUUID.containsKey("${project}")){
+      echo "Fething project UUID from DB."
       projUUID = getProjectUUID(pipeline, args)
     } else {
-      projUUID = projectsWithUUID.project
+      projUUID = projectsWithUUID["${project}"]
     }
 
-    echo "Verifying repository version scan status for ${commit} commit."
+    echo "Verifying repository version scan status for ${commit} commit with project uuid= ${projUUID}."
     def repoList = getRepositoryVersionList(pipeline, args, projUUID)
     echo "Rep Objects: ${repoList}"
     repoList.each { entry ->
