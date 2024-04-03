@@ -148,6 +148,7 @@ def projectHasCommitsWithinLastNDays(String url, def args){
   def dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX")
   def utcTimeFormat = getUTCTimeFormat()
   def curUTCTime = dateFormat.parse(utcTimeFormat.format(new Date()))
+  echo "current UTC time is ${curUTCTime}"
 
   def nDaysAgo = curUTCTime - numberOfDays
   def hasCommitInLastNDays = false
@@ -160,7 +161,8 @@ def projectHasCommitsWithinLastNDays(String url, def args){
   commitDate = getLastCommitDate(this, workspace)
   if(commitDate) {
             echo "For project: ${url} last commit date is: ${commitDate}"
-            def commitTimestamp = dateFormat.parse(utcTimeFormat.format(commitDate))
+            def commitTimestamp = utcTimeFormat.format(dateFormat.parse(commitDate))
+            echo "last commit date in UTC is: ${commitTimestamp}"
             hasCommitInLastNDays = commitTimestamp.after(nDaysAgo)
             echo "For project: ${url} the newer commit flag is ${hasCommitInLastNDays}"
   }
