@@ -163,7 +163,7 @@ def projectHasCommitsWithinLastNDays(String url, def args, def projectsWithUUID)
       // The project has commits within time limit passed via SCAN_PROJECTS_BY_LAST_COMMIT, 
       // lets check if the said commit is already scanned.
       echo "Checking if the commit: ${commitSHA} for project ${url} is already scanned."
-      if isCommitAlreadyScanned(this, args, url, commitSHA, projectsWithUUID) {
+      if(isCommitAlreadyScanned(this, args, url, commitSHA, projectsWithUUID)){
         hasCommitInLastNDays = false
       }
     }
@@ -197,6 +197,7 @@ def projectHasCommitsWithinLastNDays(String url, def args, def projectsWithUUID)
 
     echo "Verifying repository version scan status for ${commit} commit."
     def repoList = getRepositoryVersionList(pipeline, args, projUUID)
+    echo "Rep Objects: ${repoList}"
     repoList.each { entry ->
       if (entry.scan_object.status == "STATUS_SCANNED" && entry.spec.version.sha == commit) {
         commitScanStatus = true
@@ -222,7 +223,7 @@ def projectHasCommitsWithinLastNDays(String url, def args, def projectsWithUUID)
     def objects = data.list.objects
 
     // TODO: remove this
-    echo "Objects: ${objects}"
+    echo "Proj Objects: ${objects}"
 
     String uuid = ""
     objects.each { entry ->
