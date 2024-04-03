@@ -178,7 +178,7 @@ def getLastCommitDate(def pipeline, String workspace){
 def getUTCTimeFormat(){
   def dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX")
   dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"))
-  return getUTCTimeFormat
+  return dateFormat
 }
 
 /**
