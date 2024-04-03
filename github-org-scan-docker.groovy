@@ -8,17 +8,9 @@ import com.endorlabs.Checkout
 def DockerScan = new DockerScan()
 def SyncOrg = new SyncOrg()
 def args = [:]
+def projectsWithUUID = [:]
 getParameters(args)
 def projects = []
-
-// def extractRepoFromGitURL(projectUrl) {
-//   // Extract the path part of the URL
-//   def path = new URL(projectUrl).path
-//   // Remove leading and trailing slashes
-//   path = path = path.replaceAll('^/|/$', '').replaceAll('\\.git$', '')
-//   println "Extracted path: ${path}"
-//   return path
-// }
 
 pipeline {
   agent {
@@ -67,12 +59,12 @@ pipeline {
       steps {
         script {
           if (!args['PROJECT_LIST']) {
-            SyncOrg.getProjectList(projects, this, args)
+            SyncOrg.getProjectList(projects, this, args, projectsWithUUID)
           }
           echo "List of Projects:\n" + projects.join("\n")
           if (args['SCAN_PROJECTS_BY_LAST_COMMIT'].toInteger() > 0) {
             echo "Cleaning up projects older than a ${args['SCAN_PROJECTS_BY_LAST_COMMIT'].toInteger()} days"
-            projects.removeAll { item -> !projectHasCommitsWithinLastNDays(item, args) }
+            projects.removeAll { item -> !projectHasCommitsWithinLastNDays(item, args, projectsWithUUID) }
             echo "List of Projects after cleanup:\n" + projects.join("\n")            
           } else {
             echo "Commit time check not performed. Parameter was not enabled."
@@ -142,7 +134,7 @@ def generate_scan_stages(def targets, def project, def args) {
   }
 }
 
-def projectHasCommitsWithinLastNDays(String url, def args){
+def projectHasCommitsWithinLastNDays(String url, def args, def projectsWithUUID){
   def numberOfDays = args['SCAN_PROJECTS_BY_LAST_COMMIT'].toInteger()
 
   def dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX")
@@ -158,33 +150,107 @@ def projectHasCommitsWithinLastNDays(String url, def args){
   Checkout.clone(this, args, url, workspace, true)
 
   data = getLastCommitData(this, workspace)
-  // TODO: remove this echo 
-  echo "data = ${data}"
   String[] commitInfo = data.strip().split("\n")
   if(commitInfo.size() == 2) {
     commitDate = commitInfo[0]
+    commitSHA = commitInfo[1]
     echo "For project: ${url} last commit date is: ${commitDate}"
     def commitTimestamp = utcTimeFormat.format(dateFormat.parse(commitDate))
-    echo "Comparing dates, include commit after=${nDaysAgo} and last commit date=${commitTimestamp}"
+    echo "Comparing dates, include commit after date: ${nDaysAgo} and last commit date: ${commitTimestamp}"
     hasCommitInLastNDays = dateFormat.parse(commitTimestamp).after(nDaysAgo)
+    
+    if(hasCommitInLastNDays){
+      // The project has commits within time limit passed via SCAN_PROJECTS_BY_LAST_COMMIT, 
+      // lets check if the said commit is already scanned.
+      echo "Checking if the commit: ${commitSHA} for project ${url} is already scanned."
+      if isCommitAlreadyScanned(this, args, url, commitSHA, projectsWithUUID) {
+        hasCommitInLastNDays = false
+      }
+    }
   }
 
   echo "For project: ${url} the newer commit flag is ${hasCommitInLastNDays}"
   return hasCommitInLastNDays
 }
 
-def getLastCommitData(def pipeline, String workspace){
-   def lastCommitInfoCmd = 'cd "' + workspace + '" &&'
-   lastCommitInfoCmd += ' git log -1 --pretty=format:%aI%n%H'
-   def commitDate = pipeline.sh(returnStdout: true, script: lastCommitInfoCmd).trim()
-   return commitDate
-}
+  def getLastCommitData(def pipeline, String workspace){
+    def lastCommitInfoCmd = 'cd "' + workspace + '" &&'
+    lastCommitInfoCmd += ' git log -1 --pretty=format:%aI%n%H'
+    def commitDate = pipeline.sh(returnStdout: true, script: lastCommitInfoCmd).trim()
+    return commitDate
+  }
 
-def getUTCTimeFormat(){
-  def dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX")
-  dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"))
-  return dateFormat
-}
+  def getUTCTimeFormat(){
+    def dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX")
+    dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"))
+    return dateFormat
+  }
+
+  def isCommitAlreadyScanned(def pipeline, def args, String project, String commit, def projectsWithUUID){
+    boolean commitScanStatus = false
+    String projUUID = ""
+    if(!projectsWithUUID.containsKey(project)){
+      projUUID = getProjectUUID(pipeline, args)
+    } else {
+      projUUID = projectsWithUUID.project
+    }
+
+    echo "Verifying repository version scan status for ${commit} commit."
+    def repoList = getRepositoryVersionList(pipeline, args, projUUID)
+    repoList.each { entry ->
+      if (entry.scan_object.status == "STATUS_SCANNED" && entry.spec.version.sha == commit) {
+        commitScanStatus = true
+      }
+    }
+
+    return commitScanStatus
+  }
+
+  def getProjectUUID(def pipeline, def args) {
+    def dockerRun = "docker run --rm"
+    dockerRun += " us-central1-docker.pkg.dev/endor-ci/public/endorctl:" + args['ENDORCTL_VERSION']
+    if (args['ENDOR_LABS_API']) {
+      dockerRun += " --api " + args['ENDOR_LABS_API']
+    }
+    dockerRun += " --namespace " + args['ENDOR_LABS_NAMESPACE']
+    dockerRun += " --api-key " + pipeline.env.ENDOR_LABS_API_KEY
+    dockerRun += " --api-secret " + pipeline.env.ENDOR_LABS_API_SECRET
+    dockerRun += " api list -r Project --filter=\"spec.git.http_clone_url==${project}\""
+    def jsonTxt = pipeline.sh(returnStdout: true, script: dockerRun).trim()
+    def jsonSlurper = new JsonSlurper()
+    def data = jsonSlurper.parseText(jsonTxt)
+    def objects = data.list.objects
+
+    // TODO: remove this
+    echo "Objects: ${objects}"
+
+    String uuid = ""
+    objects.each { entry ->
+      uuid = entry.uuid
+    }
+
+    return uuid
+  }
+
+  def getRepositoryVersionList(def pipeline, def args, String uuid) {
+    def dockerRun = "docker run --rm"
+    dockerRun += " us-central1-docker.pkg.dev/endor-ci/public/endorctl:" + args['ENDORCTL_VERSION']
+    if (args['ENDOR_LABS_API']) {
+      dockerRun += " --api " + args['ENDOR_LABS_API']
+    }
+    dockerRun += " --namespace " + args['ENDOR_LABS_NAMESPACE']
+    dockerRun += " --api-key " + pipeline.env.ENDOR_LABS_API_KEY
+    dockerRun += " --api-secret " + pipeline.env.ENDOR_LABS_API_SECRET
+    dockerRun += " api list -r RepositoryVersion"
+    dockerRun += " --filter=\"meta.parent_uuid==${uuid}\""
+    dockerRun += " --field-mask=spec.version,scan_object"
+    
+    def jsonTxt = pipeline.sh(returnStdout: true, script: dockerRun).trim()
+    def jsonSlurper = new JsonSlurper()
+    def data = jsonSlurper.parseText(jsonTxt)
+    
+    return data.list.objects
+  }
 
 /**
  * Get Project Name from URL

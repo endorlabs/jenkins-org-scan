@@ -69,7 +69,7 @@ class SyncOrg implements Serializable {
    * @param pipeline (def): The Jenkins pipeline context.
    * @param args (def): A map containing pipeline configuration parameters.
    */
-  def getProjectList(def projects, def pipeline, def args) {
+  def getProjectList(def projects, def pipeline, def args, def projectsWithUUID) {
     def dockerRun = "docker run --rm"
     dockerRun += " -e GITHUB_TOKEN=" + pipeline.env.GITHUB_TOKEN
     dockerRun += " us-central1-docker.pkg.dev/endor-ci/public/endorctl:" + args['ENDORCTL_VERSION']
@@ -99,6 +99,7 @@ class SyncOrg implements Serializable {
           pipeline.echo("Excluding ${entry.spec.git.http_clone_url} from the list of projects to scan")
         } else {
           projects.add(entry.spec.git.http_clone_url)
+          projectsWithUUID[entry.spec.git.http_clone_url] = entry.uuid
         }
       }
     }
