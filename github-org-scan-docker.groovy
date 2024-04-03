@@ -1,6 +1,7 @@
 @Library("endor-shared-lib") _
 import groovy.json.JsonSlurper
 import java.text.SimpleDateFormat
+import java.util.TimeZone
 import com.endorlabs.DockerScan
 import com.endorlabs.SyncOrg
 import com.endorlabs.Checkout
@@ -142,21 +143,24 @@ def generate_scan_stages(def targets, def project, def args) {
 }
 
 def projectHasCommitsWithinLastNDays(String url, def args){
-   def numberOfDays = args['SCAN_PROJECTS_BY_LAST_COMMIT'].toInteger()
-   def nDaysAgo = new Date() - numberOfDays
-   def hasCommitInLastNDays = false
+  def numberOfDays = args['SCAN_PROJECTS_BY_LAST_COMMIT'].toInteger()
 
-   def Checkout = new Checkout()
-   String workspace = Checkout.getWorkSpace(this, url)
-   Checkout.setCredentialHelper(this)
-   Checkout.clone(this, args, url, workspace, true)
+  def dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX")
+  def utcTimeFormat = getUTCTimeFormat()
+  def curUTCTime = dateFormat.parse(utcTimeFormat.format(new Date()))
 
-   def dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX")
+  def nDaysAgo = curUTCTime - numberOfDays
+  def hasCommitInLastNDays = false
+
+  def Checkout = new Checkout()
+  String workspace = Checkout.getWorkSpace(this, url)
+  Checkout.setCredentialHelper(this)
+  Checkout.clone(this, args, url, workspace, true)
 
   commitDate = getLastCommitDate(this, workspace)
   if(commitDate) {
             echo "For project: ${url} last commit date is: ${commitDate}"
-            def commitTimestamp = dateFormat.parse(commitDate)
+            def commitTimestamp = dateFormat.parse(utcTimeFormat.format(commitDate))
             hasCommitInLastNDays = commitTimestamp.after(nDaysAgo)
             echo "For project: ${url} the newer commit flag is ${hasCommitInLastNDays}"
   }
@@ -169,6 +173,12 @@ def getLastCommitDate(def pipeline, String workspace){
    lastCommitInfoCmd += ' git log -1 --pretty=format:%aI'
    def commitDate = pipeline.sh(returnStdout: true, script: lastCommitInfoCmd).trim()
    return commitDate
+}
+
+def getUTCTimeFormat(){
+  def dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX")
+  dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"))
+  return getUTCTimeFormat
 }
 
 /**
