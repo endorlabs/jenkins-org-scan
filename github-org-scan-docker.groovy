@@ -161,7 +161,7 @@ def projectHasCommitsWithinLastNDays(String url, def args){
   // TODO: remove this echo 
   echo "data = ${data}"
   String[] commitInfo = data.strip().split("\n")
-  if(commitInfo.size == 2) {
+  if(commitInfo.size() == 2) {
     commitDate = commitInfo[0]
     echo "For project: ${url} last commit date is: ${commitDate}"
     def commitTimestamp = utcTimeFormat.format(dateFormat.parse(commitDate))
