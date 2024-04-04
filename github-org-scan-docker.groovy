@@ -92,18 +92,6 @@ pipeline {
     }
 }
 
-def filterProjects(def projects, def args, def projectsWithUUID) {
-    def scannableProjects = []
-    setGHCreds(this)
-    for (p in projects) {
-        if (projectHasCommitsWithinLastNDays(p, args, projectsWithUUID)) {
-            scannableProjects.add(p)
-        }
-    }
-
-    return scannableProjects
-}
-
 /**
  * Generate Scan Stages
  *
@@ -147,6 +135,18 @@ def generate_scan_stages(def targets, def project, def args) {
     }
 }
 
+def filterProjects(def projects, def args, def projectsWithUUID) {
+    def scannableProjects = []
+    setGHCreds(this)
+    for (p in projects) {
+        if (projectHasCommitsWithinLastNDays(p, args, projectsWithUUID)) {
+            scannableProjects.add(p)
+        }
+    }
+
+    return scannableProjects
+}
+
 /**
  *
  * @param url
@@ -163,8 +163,8 @@ def projectHasCommitsWithinLastNDays(String url, def args, def projectsWithUUID)
 
     def nDaysAgo = curUTCTime - numberOfDays
     def hasCommitInLastNDays = false
-    
-    String wp = this.env.WORKSPACE + "/" + createPathToClone(url)
+
+    String wp = this.env.WORKSPACE + "/" + getRepoFullName(url)
 
     def Checkout = new Checkout()
     Checkout.clone(this, args, url, wp, true)
@@ -180,7 +180,7 @@ def projectHasCommitsWithinLastNDays(String url, def args, def projectsWithUUID)
         hasCommitInLastNDays = dateFormat.parse(commitTimestamp).after(nDaysAgo)
 
         if (hasCommitInLastNDays) {
-            // The project has commits within time limit passed via SCAN_PROJECTS_BY_LAST_COMMIT,
+            // This project has commits within time limit passed via SCAN_PROJECTS_BY_LAST_COMMIT,
             // lets check if the said commit is already scanned.
             echo "Checking if the commit: ${commitSHA} for project ${url} is already scanned."
             String repoVerUUID = getScannedRepoVersionWithCommit(this, args, url, commitSHA, projectsWithUUID)
@@ -202,7 +202,7 @@ def setGHCreds(def pipeline) {
     Checkout.setCredentialHelper(this)
 }
 
-def createPathToClone(String projURL) {
+def getRepoFullName(String projURL) {
     String orgRepo = projURL.replaceAll('^https://github.com/|\\.git$', '')
     orgRepo = orgRepo.replaceAll('\\_/', '-')
     return orgRepo
@@ -229,6 +229,10 @@ def getScannedRepoVersionWithCommit(def pipeline, def args, String project, Stri
         projUUID = getProjectUUID(pipeline, args, project)
     } else {
         projUUID = projectsWithUUID["${project}"]
+    }
+
+    if (!projUUID?.trim()){
+      return scannedRepoVersionUUID
     }
 
     echo "Verifying repository version scan status for ${commit} commit with project uuid= ${projUUID}."
