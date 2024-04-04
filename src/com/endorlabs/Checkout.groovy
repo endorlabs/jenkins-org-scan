@@ -115,11 +115,9 @@ class Checkout implements Serializable {
   def getWorkSpace(def pipeline, String project) {
     def matcher = project =~ /^https:\/\/([a-zA-Z\-\.]+)\/(?<org>[a-zA-Z\-_]+)\/(?<repo>[a-zA-Z\-_]+)\.git$/
     if (matcher.matches()) {
-      println "workspace pattern matched for ${project}"
       String workspace = pipeline.env.WORKSPACE + "/${matcher.group('org')}_${matcher.group('repo')}"
       return workspace
     } else {
-      println "workspace pattern did not match for ${project}"
       return pipeline.env.WORKSPACE
     }
   }

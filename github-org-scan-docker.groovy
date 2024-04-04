@@ -64,8 +64,8 @@ pipeline {
                     }
                     echo "List of Projects:\n" + projects.join("\n")
                     if (args['SCAN_PROJECTS_BY_LAST_COMMIT'].toInteger() > 0) {
-                        echo "Cleaning up projects older than a ${args['SCAN_PROJECTS_BY_LAST_COMMIT'].toInteger()} days"
-                        projects.removeAll { item -> !projectHasCommitsWithinLastNDays(item, args, projectsWithUUID) }
+                        echo "Cleaning up projects older than ${args['SCAN_PROJECTS_BY_LAST_COMMIT'].toInteger()} days"
+                        projects = filterProjects(projects, args, projectsWithUUID)
                         echo "List of Projects after cleanup:\n" + projects.join("\n")
                     } else {
                         echo "Commit time check not performed. Parameter was not enabled."
@@ -90,6 +90,18 @@ pipeline {
             }
         }
     }
+}
+
+def filterProjects(def projects, def args, def projectsWithUUID) {
+    def scannableProjects = []
+    setGHCreds(this)
+    for (p in projects) {
+        if (projectHasCommitsWithinLastNDays(p, args, projectsWithUUID)) {
+            scannableProjects.add(p)
+        }
+    }
+
+    return scannableProjects
 }
 
 /**
@@ -136,7 +148,7 @@ def generate_scan_stages(def targets, def project, def args) {
 }
 
 /**
- * 
+ *
  * @param url
  * @param args
  * @param projectsWithUUID
@@ -151,11 +163,10 @@ def projectHasCommitsWithinLastNDays(String url, def args, def projectsWithUUID)
 
     def nDaysAgo = curUTCTime - numberOfDays
     def hasCommitInLastNDays = false
+    
+    String wp = this.env.WORKSPACE + "/" + createPathToClone(url)
 
     def Checkout = new Checkout()
-    String wp = Checkout.getWorkSpace(this, url)
-    echo "workspace path generated for ${url} is ${wp}"
-    Checkout.setCredentialHelper(this)
     Checkout.clone(this, args, url, wp, true)
 
     data = getLastCommitData(this, wp)
@@ -184,6 +195,17 @@ def projectHasCommitsWithinLastNDays(String url, def args, def projectsWithUUID)
 
     echo "For project: ${url} the newer commit flag is ${hasCommitInLastNDays}"
     return hasCommitInLastNDays
+}
+
+def setGHCreds(def pipeline) {
+    def Checkout = new Checkout()
+    Checkout.setCredentialHelper(this)
+}
+
+def createPathToClone(String projURL) {
+    String orgRepo = projURL.replaceAll('^https://github.com/|\\.git$', '')
+    orgRepo = orgRepo.replaceAll('\\_/', '-')
+    return orgRepo
 }
 
 def getLastCommitData(def pipeline, String workspace) {
