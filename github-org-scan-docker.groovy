@@ -65,7 +65,7 @@ pipeline {
                     echo "List of Projects:\n" + projects.join("\n")
                     if (args['SCAN_PROJECTS_BY_LAST_COMMIT'].toInteger() > 0) {
                         echo "Cleaning up projects older than ${args['SCAN_PROJECTS_BY_LAST_COMMIT'].toInteger()} days"
-                        projects = filterProjects(projects, args, projectsWithUUID)
+                        projects = filterProjects(this, projects, args, projectsWithUUID)
                         echo "List of Projects after cleanup:\n" + projects.join("\n")
                     } else {
                         echo "Commit time check not performed. Parameter was not enabled."
@@ -135,15 +135,21 @@ def generate_scan_stages(def targets, def project, def args) {
     }
 }
 
-def filterProjects(def projects, def args, def projectsWithUUID) {
+def filterProjects(def pipeline, def projects, def args, def projectsWithUUID) {
     def scannableProjects = []
     setGHCreds(this)
+
+    // creating tmp path to clone repo to fetch commitSHA
+    String tmpDir = '"' + pipeline.env.WORKSPACE + '/endor_tmp"'
+    pipeline.sh("mkdir ${tmpDir}")
+
     for (p in projects) {
-        if (projectHasCommitsWithinLastNDays(p, args, projectsWithUUID)) {
+        if (projectHasCommitsWithinLastNDays(p, args, projectsWithUUID, tmpDir)) {
             scannableProjects.add(p)
         }
     }
-
+    // clean up the tmp repo
+    pipeline.sh("cd ${tmpDir} && rm -rf *")
     return scannableProjects
 }
 
@@ -154,7 +160,7 @@ def filterProjects(def projects, def args, def projectsWithUUID) {
  * @param projectsWithUUID
  * @return
  */
-def projectHasCommitsWithinLastNDays(String url, def args, def projectsWithUUID) {
+def projectHasCommitsWithinLastNDays(String url, def args, def projectsWithUUID, String tmpDir) {
     def numberOfDays = args['SCAN_PROJECTS_BY_LAST_COMMIT'].toInteger()
 
     def dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX")
@@ -164,7 +170,7 @@ def projectHasCommitsWithinLastNDays(String url, def args, def projectsWithUUID)
     def nDaysAgo = curUTCTime - numberOfDays
     def hasCommitInLastNDays = false
 
-    String wp = this.env.WORKSPACE + "/" + getRepoFullName(url)
+    String wp = "\"${tmpDir}" + "/" + getRepoFullName(url) + "\""
 
     def Checkout = new Checkout()
     Checkout.clone(this, args, url, wp, true)
@@ -174,7 +180,7 @@ def projectHasCommitsWithinLastNDays(String url, def args, def projectsWithUUID)
     if (commitInfo.size() == 2) {
         commitDate = commitInfo[0]
         commitSHA = commitInfo[1]
-        echo "For project: ${url} last commit date is: ${commitDate}"
+        echo "For project: ${url} last commit date is: ${commitDate} and commitSHA is: ${commitSHA}"
         def commitTimestamp = utcTimeFormat.format(dateFormat.parse(commitDate))
         echo "Comparing dates, include commit after date: ${nDaysAgo} and last commit date: ${commitTimestamp}"
         hasCommitInLastNDays = dateFormat.parse(commitTimestamp).after(nDaysAgo)
