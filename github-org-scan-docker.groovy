@@ -46,6 +46,7 @@ pipeline {
                                 projects.add(project.strip())
                             }
                         }
+                        projects = projects.unique()
                         def projectCount = projects.size()
                         echo "Project Count: ${projectCount}"
                     } else {
@@ -148,17 +149,23 @@ def filterProjects(def pipeline, def projects, def args, def projectsWithUUID) {
     int i = 0
 
     for (p in projects) {
-        if (projectHasCommitsWithinLastNDays(p, args, projectsWithUUID, tmpDir)) {
+        String wp = "${tmpDir}" + "/" + getRepoFullName(p)
+        wp = "\"${wp}\""
+
+        if (projectHasCommitsWithinLastNDays(p, args, projectsWithUUID, wp)) {
             scannableProjects.add(p)
         }
         i++
         if (i == batch_size) {
-         echo "Sleeping for ${sleep_time} seconds"
          sleep(time: sleep_time, unit:"SECONDS")
          i = 0
         }
+
+        // clean cloned repo after we are done comparing dates.
+        pipeline.sh("cd ${tmpDir} && rm -rf *")
     }
-    // clean up the tmp repo
+
+    // clean up the tmp repo in case something is left from cloned repos.
     pipeline.sh("cd ${tmpDir} && rm -rf *")
     return scannableProjects
 }
@@ -170,7 +177,7 @@ def filterProjects(def pipeline, def projects, def args, def projectsWithUUID) {
  * @param projectsWithUUID
  * @return
  */
-def projectHasCommitsWithinLastNDays(String url, def args, def projectsWithUUID, String tmpDir) {
+def projectHasCommitsWithinLastNDays(String projURL, def args, def projectsWithUUID, String wp) {
     def numberOfDays = args['SCAN_PROJECTS_BY_LAST_COMMIT'].toInteger()
 
     def dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX")
@@ -180,17 +187,15 @@ def projectHasCommitsWithinLastNDays(String url, def args, def projectsWithUUID,
     def nDaysAgo = curUTCTime - numberOfDays
     def hasCommitInLastNDays = false
 
-    String wp = "\"${tmpDir}" + "/" + getRepoFullName(url) + "\""
-
     def Checkout = new Checkout()
-    Checkout.clone(this, args, url, wp, true)
+    Checkout.clone(this, args, projURL, wp, true)
 
     data = getLastCommitData(this, wp)
     String[] commitInfo = data.strip().split("\n")
     if (commitInfo.size() == 2) {
         commitDate = commitInfo[0]
         commitSHA = commitInfo[1]
-        echo "For project: ${url} last commit date is: ${commitDate} and commitSHA is: ${commitSHA}"
+        echo "For project: ${projURL} last commit date is: ${commitDate} and commitSHA is: ${commitSHA}"
         def commitTimestamp = utcTimeFormat.format(dateFormat.parse(commitDate))
         echo "Comparing dates, include commit after date: ${nDaysAgo} and last commit date: ${commitTimestamp}"
         hasCommitInLastNDays = dateFormat.parse(commitTimestamp).after(nDaysAgo)
@@ -198,18 +203,18 @@ def projectHasCommitsWithinLastNDays(String url, def args, def projectsWithUUID,
         if (hasCommitInLastNDays) {
             // This project has commits within time limit passed via SCAN_PROJECTS_BY_LAST_COMMIT,
             // lets check if the said commit is already scanned.
-            echo "Checking if the commit: ${commitSHA} for project ${url} is already scanned."
-            String repoVerUUID = getScannedRepoVersionWithCommit(this, args, url, commitSHA, projectsWithUUID)
+            echo "Checking if the commit: ${commitSHA} for project ${projURL} is already scanned."
+            String repoVerUUID = getScannedRepoVersionWithCommit(this, args, projURL, commitSHA, projectsWithUUID)
             if (repoVerUUID?.trim()) {
-                echo "Commit ${commitSHA} for project: ${url} is already scanned with RepositoryVersion UUID = ${repoVerUUID}, skipping the scan of this project."
+                echo "Commit ${commitSHA} for project: ${projURL} is already scanned with RepositoryVersion UUID = ${repoVerUUID}, skipping the scan of this project."
                 hasCommitInLastNDays = false
             } else {
-                echo "Commit ${commitSHA} for project: ${url} is not yet scanned and will be scanned."
+                echo "Commit ${commitSHA} for project: ${projURL} is not yet scanned and will be scanned."
             }
         }
     }
 
-    echo "For project: ${url} the newer commit flag is ${hasCommitInLastNDays}"
+    echo "For project: ${projURL} the newer commit flag is ${hasCommitInLastNDays}"
     return hasCommitInLastNDays
 }
 
