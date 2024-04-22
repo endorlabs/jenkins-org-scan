@@ -24,8 +24,8 @@ pipeline {
     }
     environment {
         GITHUB_TOKEN = credentials('GITHUB_TOKEN')
-        ENDOR_LABS_API_KEY = credentials('ENDOR_LABS_API_KEY')
-        ENDOR_LABS_API_SECRET = credentials('ENDOR_LABS_API_SECRET')
+        ENDOR_LABS_API_KEY = credentials('CHANDRA_ENDOR_KEY')
+        ENDOR_LABS_API_SECRET = credentials('CHANDRA_ENDOR_SECRET')
     }
     stages {
         stage('Docker Pull') {
@@ -143,9 +143,19 @@ def filterProjects(def pipeline, def projects, def args, def projectsWithUUID) {
     String tmpDir = '"' + pipeline.env.WORKSPACE + '/endor_tmp"'
     pipeline.sh("mkdir ${tmpDir}")
 
+    int batch_size = args['CLONE_BATCH_SIZE'].toInteger()
+    int sleep_time = args['CLONE_SLEEP_SECONDS'].toInteger()
+    int i = 0
+
     for (p in projects) {
         if (projectHasCommitsWithinLastNDays(p, args, projectsWithUUID, tmpDir)) {
             scannableProjects.add(p)
+        }
+        i++
+        if (i == batch_size) {
+         echo "Sleeping for ${sleep_time} seconds"
+         sleep(time: sleep_time, unit:"SECONDS")
+         i = 0
         }
     }
     // clean up the tmp repo
@@ -469,5 +479,17 @@ def getParameters(def args) {
         args['SCAN_PROJECTS_BY_LAST_COMMIT'] = env.SCAN_PROJECTS_BY_LAST_COMMIT
     } else {
         args['SCAN_PROJECTS_BY_LAST_COMMIT'] = 0
+    }
+
+    if (params.CLONE_BATCH_SIZE) {
+        args['CLONE_BATCH_SIZE'] = params.CLONE_BATCH_SIZE
+    } else {
+        args['CLONE_BATCH_SIZE'] = 3
+    }
+
+     if (params.CLONE_SLEEP_SECONDS) {
+        args['CLONE_SLEEP_SECONDS'] = params.CLONE_SLEEP_SECONDS
+    } else {
+        args['CLONE_SLEEP_SECONDS'] = 2
     }
 }
