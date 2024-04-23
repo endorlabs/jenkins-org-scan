@@ -119,6 +119,10 @@ def generate_scan_stages(def targets, def project, def args) {
             String stageName = "Scan " + projectName
             node(args['AGENT_LABEL']) {
                 stage(stageName) {
+                    if (args['ENABLE_GITHUB_RATE_LIMIT_DEBUG']){
+                      echo "Github rate limits before scan starts..."
+                      getGitHubRateLimit(this)
+                    }
                     try {
                         String workspace = Checkout.getWorkSpace(this, project)
                         Checkout.setCredentialHelper(this)
@@ -130,7 +134,9 @@ def generate_scan_stages(def targets, def project, def args) {
                         echo err.toString()
                         unstable("endorctl Scan failed for ${project}")
                     }
+                    
                     if (args['ENABLE_GITHUB_RATE_LIMIT_DEBUG']){
+                      echo "Github rate limits after scan completed..."
                       getGitHubRateLimit(this)
                     }
                 }
