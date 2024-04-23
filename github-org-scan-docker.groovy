@@ -119,9 +119,9 @@ def generate_scan_stages(def targets, def project, def args) {
             String stageName = "Scan " + projectName
             node(args['AGENT_LABEL']) {
                 stage(stageName) {
-                    if (args['ENABLE_GITHUB_RATE_LIMIT_DEBUG']){
-                      echo "Github rate limits before scan starts..."
-                      getGitHubRateLimit(this)
+                    if (args['ENABLE_GITHUB_RATE_LIMIT_DEBUG']) {
+                        echo "Github rate limits before scan starts..."
+                        printGitHubRateLimit(this)
                     }
                     try {
                         String workspace = Checkout.getWorkSpace(this, project)
@@ -134,10 +134,10 @@ def generate_scan_stages(def targets, def project, def args) {
                         echo err.toString()
                         unstable("endorctl Scan failed for ${project}")
                     }
-                    
-                    if (args['ENABLE_GITHUB_RATE_LIMIT_DEBUG']){
-                      echo "Github rate limits after scan completed..."
-                      getGitHubRateLimit(this)
+
+                    if (args['ENABLE_GITHUB_RATE_LIMIT_DEBUG']) {
+                        echo "Github rate limits after scan completed..."
+                        printGitHubRateLimit(this)
                     }
                 }
             }
@@ -166,8 +166,8 @@ def filterProjects(def pipeline, def projects, def args, def projectsWithUUID) {
         }
         i++
         if (i == batch_size) {
-         sleep(time: sleep_time, unit:"SECONDS")
-         i = 0
+            sleep(time: sleep_time, unit: "SECONDS")
+            i = 0
         }
 
         // clean cloned repo after we are done comparing dates.
@@ -199,8 +199,8 @@ def projectHasCommitsWithinLastNDays(def pipeline, String projURL, def args, def
     def Checkout = new Checkout()
     Checkout.clone(this, args, projURL, wp, true)
 
-    if (args['ENABLE_GITHUB_RATE_LIMIT_DEBUG']){
-        getGitHubRateLimit(pipeline)
+    if (args['ENABLE_GITHUB_RATE_LIMIT_DEBUG']) {
+        printGitHubRateLimit(pipeline)
     }
 
     data = getLastCommitData(this, wp)
@@ -265,8 +265,8 @@ def getScannedRepoVersionWithCommit(def pipeline, def args, String project, Stri
         projUUID = projectsWithUUID["${project}"]
     }
 
-    if (!projUUID?.trim()){
-      return scannedRepoVersionUUID
+    if (!projUUID?.trim()) {
+        return scannedRepoVersionUUID
     }
 
     echo "Verifying repository version scan status for ${commit} commit with project uuid= ${projUUID}."
@@ -323,7 +323,7 @@ def getRepositoryVersionList(def pipeline, def args, String uuid) {
     return data.list.objects
 }
 
-def getGitHubRateLimit(def pipeline){
+def printGitHubRateLimit(def pipeline) {
     def token = env.GITHUB_TOKEN
     def curl_cmd = "curl -L \\"
     curl_cmd += "-H \"Accept: application/vnd.github+json\" \\"
@@ -526,7 +526,7 @@ def getParameters(def args) {
 
     if (params.ENABLE_GITHUB_RATE_LIMIT_DEBUG) {
         args['ENABLE_GITHUB_RATE_LIMIT_DEBUG'] = params.ENABLE_GITHUB_RATE_LIMIT_DEBUG
-    }else {
+    } else {
         args['ENABLE_GITHUB_RATE_LIMIT_DEBUG'] = false
     }
 }
