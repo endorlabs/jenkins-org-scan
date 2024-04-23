@@ -131,7 +131,7 @@ def generate_scan_stages(def targets, def project, def args) {
                         unstable("endorctl Scan failed for ${project}")
                     }
                     if (args['ENABLE_GITHUB_RATE_LIMIT_DEBUG']){
-                      getGitHubRateLimit(pipeline)
+                      getGitHubRateLimit(this)
                     }
                 }
             }
