@@ -46,6 +46,7 @@ pipeline {
                                 projects.add(project.strip())
                             }
                         }
+                        projects = projects.unique()
                         def projectCount = projects.size()
                         echo "Project Count: ${projectCount}"
                     } else {
@@ -118,6 +119,10 @@ def generate_scan_stages(def targets, def project, def args) {
             String stageName = "Scan " + projectName
             node(args['AGENT_LABEL']) {
                 stage(stageName) {
+                    if (args['ENABLE_GITHUB_RATE_LIMIT_DEBUG']) {
+                        echo "Github rate limits before scan starts..."
+                        printGitHubRateLimit(this)
+                    }
                     try {
                         String workspace = Checkout.getWorkSpace(this, project)
                         Checkout.setCredentialHelper(this)
@@ -128,6 +133,11 @@ def generate_scan_stages(def targets, def project, def args) {
                     } catch (err) {
                         echo err.toString()
                         unstable("endorctl Scan failed for ${project}")
+                    }
+
+                    if (args['ENABLE_GITHUB_RATE_LIMIT_DEBUG']) {
+                        echo "Github rate limits after scan completed..."
+                        printGitHubRateLimit(this)
                     }
                 }
             }
@@ -143,12 +153,28 @@ def filterProjects(def pipeline, def projects, def args, def projectsWithUUID) {
     String tmpDir = '"' + pipeline.env.WORKSPACE + '/endor_tmp"'
     pipeline.sh("mkdir ${tmpDir}")
 
+    int batch_size = args['CLONE_BATCH_SIZE'].toInteger()
+    int sleep_time = args['CLONE_SLEEP_SECONDS'].toInteger()
+    int i = 0
+
     for (p in projects) {
-        if (projectHasCommitsWithinLastNDays(p, args, projectsWithUUID, tmpDir)) {
+        String wp = "${tmpDir}" + "/" + getRepoFullName(p)
+        wp = "\"${wp}\""
+
+        if (projectHasCommitsWithinLastNDays(pipeline, p, args, projectsWithUUID, wp)) {
             scannableProjects.add(p)
         }
+        i++
+        if (i == batch_size) {
+            sleep(time: sleep_time, unit: "SECONDS")
+            i = 0
+        }
+
+        // clean cloned repo after we are done comparing dates.
+        pipeline.sh("cd ${tmpDir} && rm -rf *")
     }
-    // clean up the tmp repo
+
+    // clean up the tmp repo in case something is left from cloned repos.
     pipeline.sh("cd ${tmpDir} && rm -rf *")
     return scannableProjects
 }
@@ -160,7 +186,7 @@ def filterProjects(def pipeline, def projects, def args, def projectsWithUUID) {
  * @param projectsWithUUID
  * @return
  */
-def projectHasCommitsWithinLastNDays(String url, def args, def projectsWithUUID, String tmpDir) {
+def projectHasCommitsWithinLastNDays(def pipeline, String projURL, def args, def projectsWithUUID, String wp) {
     def numberOfDays = args['SCAN_PROJECTS_BY_LAST_COMMIT'].toInteger()
 
     def dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX")
@@ -170,17 +196,19 @@ def projectHasCommitsWithinLastNDays(String url, def args, def projectsWithUUID,
     def nDaysAgo = curUTCTime - numberOfDays
     def hasCommitInLastNDays = false
 
-    String wp = "\"${tmpDir}" + "/" + getRepoFullName(url) + "\""
-
     def Checkout = new Checkout()
-    Checkout.clone(this, args, url, wp, true)
+    Checkout.clone(this, args, projURL, wp, true)
+
+    if (args['ENABLE_GITHUB_RATE_LIMIT_DEBUG']) {
+        printGitHubRateLimit(pipeline)
+    }
 
     data = getLastCommitData(this, wp)
     String[] commitInfo = data.strip().split("\n")
     if (commitInfo.size() == 2) {
         commitDate = commitInfo[0]
         commitSHA = commitInfo[1]
-        echo "For project: ${url} last commit date is: ${commitDate} and commitSHA is: ${commitSHA}"
+        echo "For project: ${projURL} last commit date is: ${commitDate} and commitSHA is: ${commitSHA}"
         def commitTimestamp = utcTimeFormat.format(dateFormat.parse(commitDate))
         echo "Comparing dates, include commit after date: ${nDaysAgo} and last commit date: ${commitTimestamp}"
         hasCommitInLastNDays = dateFormat.parse(commitTimestamp).after(nDaysAgo)
@@ -188,18 +216,18 @@ def projectHasCommitsWithinLastNDays(String url, def args, def projectsWithUUID,
         if (hasCommitInLastNDays) {
             // This project has commits within time limit passed via SCAN_PROJECTS_BY_LAST_COMMIT,
             // lets check if the said commit is already scanned.
-            echo "Checking if the commit: ${commitSHA} for project ${url} is already scanned."
-            String repoVerUUID = getScannedRepoVersionWithCommit(this, args, url, commitSHA, projectsWithUUID)
+            echo "Checking if the commit: ${commitSHA} for project ${projURL} is already scanned."
+            String repoVerUUID = getScannedRepoVersionWithCommit(this, args, projURL, commitSHA, projectsWithUUID)
             if (repoVerUUID?.trim()) {
-                echo "Commit ${commitSHA} for project: ${url} is already scanned with RepositoryVersion UUID = ${repoVerUUID}, skipping the scan of this project."
+                echo "Commit ${commitSHA} for project: ${projURL} is already scanned with RepositoryVersion UUID = ${repoVerUUID}, skipping the scan of this project."
                 hasCommitInLastNDays = false
             } else {
-                echo "Commit ${commitSHA} for project: ${url} is not yet scanned and will be scanned."
+                echo "Commit ${commitSHA} for project: ${projURL} is not yet scanned and will be scanned."
             }
         }
     }
 
-    echo "For project: ${url} the newer commit flag is ${hasCommitInLastNDays}"
+    echo "For project: ${projURL} the newer commit flag is ${hasCommitInLastNDays}"
     return hasCommitInLastNDays
 }
 
@@ -237,8 +265,8 @@ def getScannedRepoVersionWithCommit(def pipeline, def args, String project, Stri
         projUUID = projectsWithUUID["${project}"]
     }
 
-    if (!projUUID?.trim()){
-      return scannedRepoVersionUUID
+    if (!projUUID?.trim()) {
+        return scannedRepoVersionUUID
     }
 
     echo "Verifying repository version scan status for ${commit} commit with project uuid= ${projUUID}."
@@ -293,6 +321,19 @@ def getRepositoryVersionList(def pipeline, def args, String uuid) {
     def data = jsonSlurper.parseText(jsonTxt)
 
     return data.list.objects
+}
+
+def printGitHubRateLimit(def pipeline) {
+    def token = env.GITHUB_TOKEN
+    def curl_cmd = "curl -L \\"
+    curl_cmd += "-H \"Accept: application/vnd.github+json\" \\"
+    curl_cmd += "-H \"Authorization: Bearer ${token}\" \\"
+    curl_cmd += "-H \"X-GitHub-Api-Version: 2022-11-28\" \\"
+    curl_cmd += "https://api.github.com/rate_limit"
+
+    def remaining_limits = pipeline.sh(returnStdout: true, script: curl_cmd).trim()
+    echo "remaining github rate limits"
+    echo "${remaining_limits}"
 }
 
 /**
@@ -469,5 +510,23 @@ def getParameters(def args) {
         args['SCAN_PROJECTS_BY_LAST_COMMIT'] = env.SCAN_PROJECTS_BY_LAST_COMMIT
     } else {
         args['SCAN_PROJECTS_BY_LAST_COMMIT'] = 0
+    }
+
+    if (params.CLONE_BATCH_SIZE) {
+        args['CLONE_BATCH_SIZE'] = params.CLONE_BATCH_SIZE
+    } else {
+        args['CLONE_BATCH_SIZE'] = 3
+    }
+
+    if (params.CLONE_SLEEP_SECONDS) {
+        args['CLONE_SLEEP_SECONDS'] = params.CLONE_SLEEP_SECONDS
+    } else {
+        args['CLONE_SLEEP_SECONDS'] = 2
+    }
+
+    if (params.ENABLE_GITHUB_RATE_LIMIT_DEBUG) {
+        args['ENABLE_GITHUB_RATE_LIMIT_DEBUG'] = params.ENABLE_GITHUB_RATE_LIMIT_DEBUG
+    } else {
+        args['ENABLE_GITHUB_RATE_LIMIT_DEBUG'] = false
     }
 }
