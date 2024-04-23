@@ -34,7 +34,9 @@ class DockerScan implements Serializable {
       dockerRun += " --verbose"
     }
     dockerRun += " --log-level " + args['LOG_LEVEL'] + " scan --path=/root/endorlabs "
-    dockerRun += " --github-token " + pipeline.env.GITHUB_TOKEN
+    if (args['SCAN_TYPE'] && args['SCAN_TYPE'].contains("github")) {
+      dockerRun += " --github-token " + pipeline.env.GITHUB_TOKEN
+    }
     if (args['SCAN_TYPE']) {
       dockerRun += " --enable " + args['SCAN_TYPE']
     }
@@ -57,7 +59,7 @@ class DockerScan implements Serializable {
       dockerRun += " " + args['ADDITIONAL_ARGS']
     }
     def hostName = pipeline.sh(returnStdout: true, script: "uname -n").trim()
-    pipeline.echo("Running endorctl scan for path '$workspace' on host '$hostName'")
+    pipeline.echo("Running endorctl scan for path '$workspace' on host '$hostName' with cmd '$dockerRun'")
     pipeline.sh(dockerRun)
   }
 

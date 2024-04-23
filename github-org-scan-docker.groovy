@@ -130,6 +130,9 @@ def generate_scan_stages(def targets, def project, def args) {
                         echo err.toString()
                         unstable("endorctl Scan failed for ${project}")
                     }
+                    if (args['ENABLE_GITHUB_RATE_LIMIT_DEBUG']){
+                      getGitHubRateLimit(pipeline)
+                    }
                 }
             }
         }
@@ -152,7 +155,7 @@ def filterProjects(def pipeline, def projects, def args, def projectsWithUUID) {
         String wp = "${tmpDir}" + "/" + getRepoFullName(p)
         wp = "\"${wp}\""
 
-        if (projectHasCommitsWithinLastNDays(p, args, projectsWithUUID, wp)) {
+        if (projectHasCommitsWithinLastNDays(pipeline, p, args, projectsWithUUID, wp)) {
             scannableProjects.add(p)
         }
         i++
@@ -177,7 +180,7 @@ def filterProjects(def pipeline, def projects, def args, def projectsWithUUID) {
  * @param projectsWithUUID
  * @return
  */
-def projectHasCommitsWithinLastNDays(String projURL, def args, def projectsWithUUID, String wp) {
+def projectHasCommitsWithinLastNDays(def pipeline, String projURL, def args, def projectsWithUUID, String wp) {
     def numberOfDays = args['SCAN_PROJECTS_BY_LAST_COMMIT'].toInteger()
 
     def dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX")
@@ -189,6 +192,10 @@ def projectHasCommitsWithinLastNDays(String projURL, def args, def projectsWithU
 
     def Checkout = new Checkout()
     Checkout.clone(this, args, projURL, wp, true)
+
+    if (args['ENABLE_GITHUB_RATE_LIMIT_DEBUG']){
+        getGitHubRateLimit(pipeline)
+    }
 
     data = getLastCommitData(this, wp)
     String[] commitInfo = data.strip().split("\n")
@@ -308,6 +315,19 @@ def getRepositoryVersionList(def pipeline, def args, String uuid) {
     def data = jsonSlurper.parseText(jsonTxt)
 
     return data.list.objects
+}
+
+def getGitHubRateLimit(def pipeline){
+    def token = env.GITHUB_TOKEN
+    def curl_cmd = "curl -L \\"
+    curl_cmd += "-H \"Accept: application/vnd.github+json\" \\"
+    curl_cmd += "-H \"Authorization: Bearer ${token}\" \\"
+    curl_cmd += "-H \"X-GitHub-Api-Version: 2022-11-28\" \\"
+    curl_cmd += "https://api.github.com/rate_limit"
+
+    def remaining_limits = pipeline.sh(returnStdout: true, script: curl_cmd).trim()
+    echo "remaining github rate limits"
+    echo "${remaining_limits}"
 }
 
 /**
@@ -492,9 +512,15 @@ def getParameters(def args) {
         args['CLONE_BATCH_SIZE'] = 3
     }
 
-     if (params.CLONE_SLEEP_SECONDS) {
+    if (params.CLONE_SLEEP_SECONDS) {
         args['CLONE_SLEEP_SECONDS'] = params.CLONE_SLEEP_SECONDS
     } else {
         args['CLONE_SLEEP_SECONDS'] = 2
+    }
+
+    if (params.ENABLE_GITHUB_RATE_LIMIT_DEBUG) {
+        args['ENABLE_GITHUB_RATE_LIMIT_DEBUG'] = params.ENABLE_GITHUB_RATE_LIMIT_DEBUG
+    }else {
+        args['ENABLE_GITHUB_RATE_LIMIT_DEBUG'] = false
     }
 }
