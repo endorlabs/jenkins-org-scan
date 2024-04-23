@@ -89,6 +89,9 @@ Configure the following GitHub enterprise server parameters in the Jenkins pipel
     ```
 - `EXCLUDE_PROJECTS` This is a *multi-line string parameter*.: Use this parameter to list projects or repositories to exclude from the scan.
 - `NO_OF_THREADS` --> This is a *string parameter*. Enter the number of Jenkins agents that can be used in parallel for the `endorctl` scan. If you have 10 Jenkins agents configured with the given `AGENT_LABEL`, you can enter this value as 9. If not specified, this value defaults to **5**.
+- `CLONE_BATCH_SIZE` This is a *string parameter*. Enter the number of projects that can be processed in a batch before going to sleep. Default is set to **3** .
+- `CLONE_SLEEP_SECONDS` This is a *string parameter*. Enter the number of seconds the script will go to sleep before processing next batch of project. Default is set to **2** .
+- `ENABLE_GITHUB_RATE_LIMIT_DEBUG` This is a *boolean parameter*. Select this in case you want to see the github tokens rate limit data.
 
 ### Configure the Jenkins job
 Use the following procedure to configure the Jenkins pipeline and scan the repositories in your organization.
